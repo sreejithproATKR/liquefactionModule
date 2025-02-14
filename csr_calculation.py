@@ -1,5 +1,8 @@
 class CSR:
-    def __init__(self, depth, gamma, unit_weight_water, peak_acceleration, water_table_depth):
+    def __init__(self, depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1,current_sigma_0, current_depth):
+        self.current_sigma_0 = current_sigma_0
+        self.current_sigma_1 = current_sigma_1
+        self.current_depth = current_depth
         self.depth = depth
         self.gamma = gamma
         self.unit_weight_water = unit_weight_water
@@ -20,11 +23,11 @@ class CSR:
 
     def calculate_stresses(self):
         if self.depth <= self.water_table_depth:
-            sigma_1 = self.depth * self.gamma
-            sigma_0 = sigma_1
+            sigma_1 = self.current_sigma_1 + (self.depth - self.current_depth) * self.gamma
+            sigma_0 = self.current_sigma_0 + (self.depth - self.current_depth) * self.gamma
         else:
-            sigma_1 = self.depth * self.gamma
-            sigma_0 = self.water_table_depth * self.gamma + (self.depth - self.water_table_depth) * (
+            sigma_1 = self.current_sigma_1 + (self.depth - self.current_depth) * self.gamma
+            sigma_0 = self.current_sigma_0 + (self.depth - self.current_depth) * (
                     self.gamma - self.unit_weight_water)
 
         return sigma_1, sigma_0
@@ -44,4 +47,4 @@ class CSR:
         # Calculate CSR using the given formula
         gamma_d = self.calculate_gamma_d()
         csr_value = 0.65 * (sigma_1 / sigma_0) * self.peak_acceleration * gamma_d
-        return round(csr_value,2)
+        return sigma_1, sigma_0, round(csr_value,2)

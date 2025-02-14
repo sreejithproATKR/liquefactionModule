@@ -1,10 +1,10 @@
 def calculate_depth_correction(sigma_0):
-    henergy_c = (1/sigma_0) ** 0.5
-    return max(min(henergy_c, 1.17), 0.4)
-
+    depth_c = (1/sigma_0) ** 0.5
+    return max(min(depth_c, 1.17), 0.4)
 
 class CRR:
-    def __init__(self, data_type, depth, water_table_depth,gamma, unit_weight_water, depth_c, boreholed_c, rod_length_c, sampler_c,spt_n_value=None, cpt_qc_value=None):
+    def __init__(self, data_type, depth, water_table_depth,gamma, unit_weight_water=10, henergy_c=1, boreholed_c=1, rod_length_c=1, sampler_c=1,spt_n_value=None, cpt_qc_value=None):
+        self.henergy_c = henergy_c
         self.unit_weight_water = unit_weight_water
         self.gamma = gamma
         self.water_table_depth = water_table_depth
@@ -12,7 +12,6 @@ class CRR:
         self.sampler_c = sampler_c
         self.rod_length_c = rod_length_c
         self.boreholed_c = boreholed_c
-        self.depth_c = depth_c
         self.data_type = data_type
         self.spt_n_value = spt_n_value
         self.cpt_qc_value = cpt_qc_value
@@ -66,7 +65,7 @@ class CRR:
         denominator = 1 + (b * self.spt_n_value) + (d * self.spt_n_value ** 2) + (f * self.spt_n_value ** 3) + (h * self.spt_n_value ** 4)
         crr_value = numerator / denominator
         sigma_1, sigma_0 = self.calculate_stresses()
-        crr_value = (numerator / denominator) * calculate_depth_correction(sigma_0)
+        crr_value = (numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c
         return round(crr_value,2)
 
     def calculate_crr_cpt(self):
@@ -81,7 +80,7 @@ class CRR:
 
         # Example formula for CRR calculation using CPT data (replace with actual formula)
         crr_value = 0.2 * self.cpt_qc_value
-        return round(crr_value, 2)
+        return round(crr_value, 3)
 
 # Example usage
 # crr_spt = CRR(data_type="SPT", spt_n_value=30)

@@ -47,6 +47,12 @@ def preview_spt_data(frame, spt_data):
         tree = ttk.Treeview(frame)
         tree.pack(fill="both", expand=True)
 
+        #Scroll Bar for the tree view, temporarily abandoned
+        # scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        # scrollbar.place()
+        # tree.configure(yscrollcommand=scrollbar.set)
+        # scrollbar.pack(side='right', fill='y')
+
         # Define columns
         tree["columns"] = list(spt_data.columns)
         tree["show"] = "headings"
@@ -74,15 +80,20 @@ def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_de
     water_table_depth (float): Water table depth.
     peak_acceleration (float): Peak horizontal acceleration.
     """
+    current_sigma_1 = 0
+    current_sigma_0 = 0
+    current_depth = 0
+
     if spt_data is not None:
         # Calculate CSR for each depth and add it to the DataFrame
         csr_values = []
         for index, row in spt_data.iterrows():
             depth = row["Depth"]
             gamma = row["Gamma"]
-            csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth)
-            csr_value = csr_calculator.calculate_csr()
+            csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1, current_sigma_0,current_depth)
+            current_sigma_1,current_sigma_0, csr_value = csr_calculator.calculate_csr()
             csr_values.append(csr_value)
+            current_depth = depth
 
         spt_data["CSR"] = csr_values
 
@@ -92,7 +103,7 @@ def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_de
         messagebox.showerror("Error", "Failed to load SPT data.")
 
 
-def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth):
+def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth, henergy_c):
     """
     Calculate CRR for each SPT data and preview in the given frame.
 
@@ -110,7 +121,7 @@ def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_de
             spt_n_value = row["SPT"]
             depth = row['Depth']
             gamma = row['Gamma']
-            crr_calculator = CRR("SPT", depth, water_table_depth, gamma,unit_weight_water,1,1,1,1, spt_n_value)
+            crr_calculator = CRR("SPT", depth, water_table_depth, gamma,unit_weight_water,henergy_c,1,1,1, spt_n_value)
             crr_value = crr_calculator.calculate_crr_spt()
             crr_values.append(crr_value)
 
@@ -130,11 +141,15 @@ def plot_crr_csr_vs_depth(frame, spt_data):
     spt_data (pd.DataFrame): The DataFrame containing SPT or CPT data with CRR and CSR values.
     """
     if spt_data is not None:
+        for widget in frame.winfo_children():
+            widget.destroy()
+
         depth = spt_data["Depth"]
         crr = spt_data["CRR"]
         csr = spt_data["CSR"]
 
         fig, ax = plt.subplots()
+        ax.cla()
 
         ax.plot(crr, depth, label="CRR", marker='o')
         ax.plot(csr, depth, label="CSR", marker='x')

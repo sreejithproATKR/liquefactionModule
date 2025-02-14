@@ -126,20 +126,7 @@ spt_right_frame.grid(row=0, column=1, padx=10, pady=10)
 spt_rightB_frame = ttk.Frame(spt_details_frame)
 spt_rightB_frame.grid(row=1, column=1, padx=10, pady=10)
 
-# Create buttons to load and export SPT data in the left frame of SPT details tab
-load_button = ttk.Button(spt_left_frame, text="Load SPT Data", command=lambda: load_spt_data_with_dialog(spt_preview_frame))
-load_button.grid(row=0, column=0, padx=5, pady=5)
 
-# Create a button to calculate CSR
-calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame, spt_data, float(unit_weight_water_entry.get()), float(water_table_depth_entry.get()), float(a_max_entry.get())))
-calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
-
-calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data, float(unit_weight_water_entry.get()), float(water_table_depth_entry.get())))
-calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
-
-# Create a button to plot CRR vs Depth and CSR vs Depth
-plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_crr_csr_vs_depth(spt_rightB_frame, spt_data))
-plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
 
 
 # calculate_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame,a_max))
@@ -163,18 +150,29 @@ energy_ratio_label = ttk.Label(spt_left_frame, text="Type of Hammer:")
 energy_ratio_label.grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
 energy_ratio_var = tk.StringVar()
-energy_ratio_var.set("Safety Hammer")
+energy_ratio_var.set("0.89")
 
 safety_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Safety Hammer", variable=energy_ratio_var,
-                                   value="Safety Hammer")
+                                   value="0.89")
 safety_hammer_rb.grid(row=1, column=1, padx=5, pady=5, sticky='w')
 
-donut_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Donut Hammer", variable=energy_ratio_var, value="Donut Hammer")
+donut_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Donut Hammer", variable=energy_ratio_var, value="0.73")
 donut_hammer_rb.grid(row=2, column=1, padx=5, pady=5, sticky='w')
 
 automatic_trip_rb = ttk.Radiobutton(spt_left_frame, text="Automatic Trip", variable=energy_ratio_var,
-                                    value="Automatic Trip")
+                                    value="1.25")
 automatic_trip_rb.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+# Debugging function to print the current value of energy_ratio_var
+
+# Variable to hold the energy ratio value
+henergy_c = float(energy_ratio_var.get())
+# Function to update henergy_c
+def update_henergy_c(*args):
+    global henergy_c
+    henergy_c = float(energy_ratio_var.get())
+# Trace the variable to call update_henergy_c whenever it changes
+energy_ratio_var.trace_add("write", update_henergy_c)
 
 
 
@@ -238,6 +236,27 @@ stark_olsen_rb.grid(row=3, column=4, padx=5, pady=5, sticky='w')
 
 mstark_olsen_rb = ttk.Radiobutton(spt_left_frame, text="Modified Stark & Olsen", variable=fines_correction_var, value="Modified Stark & Olsen")
 mstark_olsen_rb.grid(row=4, column=4, padx=5, pady=5, sticky='w')
+
+# Create buttons to load and export SPT data in the left frame of SPT details tab
+load_button = ttk.Button(spt_left_frame, text="Load SPT Data", command=lambda: load_spt_data_with_dialog(spt_preview_frame))
+load_button.grid(row=0, column=0, padx=5, pady=5)
+
+# Create a button to calculate CSR
+calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame, spt_data,
+                                                                                                                  float(unit_weight_water_entry.get()),
+                                                                                                                  float(water_table_depth_entry.get()),
+                                                                                                                  float(a_max_entry.get())))
+calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
+calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
+                                                                                                                  float(unit_weight_water_entry.get()),
+                                                                                                                  float(water_table_depth_entry.get()),
+                                                                                                                  henergy_c))
+calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
+
+# Create a button to plot CRR vs Depth and CSR vs Depth
+plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_crr_csr_vs_depth(spt_rightB_frame, spt_data))
+plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
 # Run the application
 
 # sv_ttk.set_theme("dark")
