@@ -65,7 +65,8 @@ class CRR:
         denominator = 1 + (b * self.spt_n_value) + (d * self.spt_n_value ** 2) + (f * self.spt_n_value ** 3) + (h * self.spt_n_value ** 4)
         crr_value = numerator / denominator
         sigma_1, sigma_0 = self.calculate_stresses()
-        crr_value = (numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c * self.boreholed_c * self.rod_length_c
+        crr_value = ((numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c * self.boreholed_c
+                     * self.rod_length_c * self.sampler_c)
         return round(crr_value,3)
 
     def calculate_crr_cpt(self):

@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
 from tkinter import filedialog
 from spt_data import (preview_spt_data, calculate_and_preview_csr, calculate_and_preview_crr, load_spt_data_from_excel,
                       plot_crr_csr_vs_depth)
@@ -125,18 +124,6 @@ spt_rightB_frame = ttk.Frame(spt_details_frame)
 spt_rightB_frame.grid(row=1, column=1, padx=10, pady=10)
 
 
-
-
-# calculate_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame,a_max))
-# calculate_button.grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
-
-# Create a button to calculate CRR in the left frame of SPT details tab
-# calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame))
-# calculate_crr_button.grid(row=2, column=0, padx=5, pady=5)
-
-# plot_crr_button = ttk.Button(spt_left_frame, text="Plot CRR vs Depth", command=lambda: plot_crr_graph(spt_rightB_frame))
-# plot_crr_button.grid(row=3, column=0, padx=5, pady=5, sticky = 'w')
-
 # Create a frame to preview SPT data in the right frame of SPT details tab
 spt_preview_frame = ttk.Frame(spt_right_frame)
 spt_preview_frame.pack(fill="both", expand=True)
@@ -251,6 +238,33 @@ stark_olsen_rb.grid(row=3, column=4, padx=5, pady=5, sticky='w')
 mstark_olsen_rb = ttk.Radiobutton(spt_left_frame, text="Modified Stark & Olsen", variable=fines_correction_var, value="Modified Stark & Olsen")
 mstark_olsen_rb.grid(row=4, column=4, padx=5, pady=5, sticky='w')
 
+# Add radio buttons for Sampler Correction
+sampler_correction_label = ttk.Label(spt_left_frame, text="Sampler Correction:")
+sampler_correction_label.grid(row=0, column=5, padx=5, pady=5, sticky='w')
+
+sampler_correction_var = tk.StringVar()
+sampler_correction_var.set("1.0")
+
+standard_sampler_rb = ttk.Radiobutton(spt_left_frame, text="Standard Sampler", variable=sampler_correction_var,
+                                     value="1.0")
+standard_sampler_rb.grid(row=1, column=5, padx=5, pady=5, sticky='w')
+
+standard_sampler_liner_rb = ttk.Radiobutton(spt_left_frame, text="Sampler Without Liners", variable=sampler_correction_var,
+                                     value="1.2")
+standard_sampler_liner_rb.grid(row=2, column=5, padx=5, pady=5, sticky='w')
+
+
+sampler_c = float(sampler_correction_var.get())
+# Function to update sampler_c
+def update_sampler_c(*args):
+    global sampler_c
+    sampler_c = float(sampler_correction_var.get())
+# Trace the variable to call update_sampler_c whenever it changes
+sampler_correction_var.trace_add("write", update_sampler_c)
+
+
+
+
 # Create buttons to load and export SPT data in the left frame of SPT details tab
 load_button = ttk.Button(spt_left_frame, text="Load SPT Data", command=lambda: load_spt_data_with_dialog(spt_preview_frame))
 load_button.grid(row=0, column=0, padx=5, pady=5)
@@ -265,7 +279,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c,boreholed_c, rod_length_c))
+                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
