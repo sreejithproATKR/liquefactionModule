@@ -5,8 +5,6 @@ from tkinter import filedialog
 from spt_data import (preview_spt_data, calculate_and_preview_csr, calculate_and_preview_crr, load_spt_data_from_excel,
                       plot_crr_csr_vs_depth)
 
-
-
 # Global variable to store SPT data
 spt_data = None
 
@@ -181,40 +179,56 @@ borehole_diameter_label = ttk.Label(spt_left_frame, text="Borehole Diameter:")
 borehole_diameter_label.grid(row=0, column=2, padx=5, pady=5, sticky='w')
 
 borehole_diameter_var = tk.StringVar()
-borehole_diameter_var.set("65mm to 115mm")
+borehole_diameter_var.set("1.0")
 
 diameter_65_115_rb = ttk.Radiobutton(spt_left_frame, text="65mm to 115mm", variable=borehole_diameter_var,
-                                     value="65mm to 115mm")
+                                     value="1.0")
 diameter_65_115_rb.grid(row=1, column=2, padx=5, pady=5, sticky='w')
 
-diameter_150_rb = ttk.Radiobutton(spt_left_frame, text="150mm", variable=borehole_diameter_var, value="150mm")
+diameter_150_rb = ttk.Radiobutton(spt_left_frame, text="150mm", variable=borehole_diameter_var, value="1.05")
 diameter_150_rb.grid(row=2, column=2, padx=5, pady=5, sticky='w')
 
-diameter_200_rb = ttk.Radiobutton(spt_left_frame, text="200mm", variable=borehole_diameter_var, value="200mm")
+diameter_200_rb = ttk.Radiobutton(spt_left_frame, text="200mm", variable=borehole_diameter_var, value="1.15")
 diameter_200_rb.grid(row=3, column=2, padx=5, pady=5, sticky='w')
+
+boreholed_c = float(borehole_diameter_var.get())
+# Function to update boreholed_c
+def update_boreholed_c(*args):
+    global boreholed_c
+    boreholed_c = float(borehole_diameter_var.get())
+# Trace the variable to call update_boreholed_c whenever it changes
+borehole_diameter_var.trace_add("write", update_boreholed_c)
 
 # Add radio buttons for Rod Length
 rod_length_label = ttk.Label(spt_left_frame, text="Rod Length:")
 rod_length_label.grid(row=0, column=3, padx=5, pady=5, sticky='w')
 
 rod_length_var = tk.StringVar()
-rod_length_var.set("3 m to 4 m")
+rod_length_var.set("0.75")
 
-rod_length_3_4_rb = ttk.Radiobutton(spt_left_frame, text="3 m to 4 m", variable=rod_length_var, value="3 m to 4 m")
+rod_length_3_4_rb = ttk.Radiobutton(spt_left_frame, text="3 m to 4 m", variable=rod_length_var, value="0.75")
 rod_length_3_4_rb.grid(row=1, column=3, padx=5, pady=5, sticky='w')
 
-rod_length_4_6_rb = ttk.Radiobutton(spt_left_frame, text="4 m to 6 m", variable=rod_length_var, value="4 m to 6 m")
+rod_length_4_6_rb = ttk.Radiobutton(spt_left_frame, text="4 m to 6 m", variable=rod_length_var, value="0.85")
 rod_length_4_6_rb.grid(row=2, column=3, padx=5, pady=5, sticky='w')
 
-rod_length_6_10_rb = ttk.Radiobutton(spt_left_frame, text="6 m to 10 m", variable=rod_length_var, value="6 m to 10 m")
+rod_length_6_10_rb = ttk.Radiobutton(spt_left_frame, text="6 m to 10 m", variable=rod_length_var, value="0.95")
 rod_length_6_10_rb.grid(row=3, column=3, padx=5, pady=5, sticky='w')
 
 rod_length_10_30_rb = ttk.Radiobutton(spt_left_frame, text="10 m to 30 m", variable=rod_length_var,
-                                      value="10 m to 30 m")
+                                      value="1.0")
 rod_length_10_30_rb.grid(row=4, column=3, padx=5, pady=5, sticky='w')
 
-rod_length_30_rb = ttk.Radiobutton(spt_left_frame, text=">30 m", variable=rod_length_var, value=">30 m")
+rod_length_30_rb = ttk.Radiobutton(spt_left_frame, text=">30 m", variable=rod_length_var, value="0.9")
 rod_length_30_rb.grid(row=5, column=3, padx=5, pady=5, sticky='w')
+
+rod_length_c = float(rod_length_var.get())
+# Function to update rod_length_c
+def update_rod_length_c(*args):
+    global rod_length_c
+    rod_length_c = float(rod_length_var.get())
+# Trace the variable to call update_rod_length_c whenever it changes
+rod_length_var.trace_add("write", update_rod_length_c)
 
 # Add radio buttons for Fines Correction
 fines_correction_label = ttk.Label(spt_left_frame, text="Fines Correction:")
@@ -251,7 +265,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c))
+                                                                                                                  henergy_c,boreholed_c, rod_length_c))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
