@@ -1,9 +1,16 @@
+import math
+
 def calculate_depth_correction(sigma_0):
     depth_c = (1/sigma_0) ** 0.5
     return max(min(depth_c, 1.17), 0.4)
 
+
+
 class CRR:
-    def __init__(self, data_type, depth, water_table_depth,gamma, unit_weight_water=10, henergy_c=1, boreholed_c=1, rod_length_c=1, sampler_c=1,spt_n_value=None, cpt_qc_value=None):
+    def __init__(self, data_type, depth, water_table_depth,gamma, unit_weight_water=10, henergy_c=1, boreholed_c=1, rod_length_c=1,
+                 sampler_c=1,fines_content=0, fines_correction_type="No Correction" ,spt_n_value=None, cpt_qc_value=None):
+        self.fines_correction_type = fines_correction_type
+        self.fines_content = fines_content
         self.henergy_c = henergy_c
         self.unit_weight_water = unit_weight_water
         self.gamma = gamma
@@ -16,6 +23,44 @@ class CRR:
         self.spt_n_value = spt_n_value
         self.cpt_qc_value = cpt_qc_value
 
+
+    def calculate_alpha_beta_idriss(self):
+        if self.fines_content <= 5:
+            alpha = 0
+            beta = 1.0
+        elif 5 < self.fines_content <= 35:
+            alpha = math.exp(1.76-(190/pow(self.fines_content,2)))
+            beta = (0.99+ pow(self.fines_content,1.5))/100
+        else:
+            alpha = 5.0
+            beta = 1.2
+        return alpha, beta
+
+    def calculate_fines_c(self):
+        if self.fines_correction_type == "No Correction":
+            self.spt_n_value = self.spt_n_value
+        elif self.fines_correction_type == "Idriss & Seed, 1997":
+            self.spt_n_value = self.idriss_seed_corr()
+        elif self.fines_correction_type == "Stark & Olsen, 1995":
+            self.spt_n_value = self.star_olsen_corr()
+        else:
+            fines_c = self.modified_star_olsen_corr()
+
+        return self.spt_n_value
+
+
+    def idriss_seed_corr(self):
+        alpha, beta = self.calculate_alpha_beta_idriss()
+        corrected_n = alpha + (beta * self.spt_n_value)
+        return corrected_n
+
+    def star_olsen_corr(self,):
+        corrected_n = self.fines_content * 0.5
+        return corrected_n
+
+    def modified_star_olsen_corr(self):
+        corrected_n = self.fines_content * 0.25
+        return corrected_n
 
     def calculate_stresses(self):
         if self.depth <= self.water_table_depth:
@@ -50,8 +95,7 @@ class CRR:
         Returns:
         float: The calculated CRR value.
         """
-        if self.spt_n_value is None:
-            raise ValueError("SPT N-value is required for CRR calculation using SPT data.")
+        self.spt_n_value = self.calculate_fines_c()
 
         a = 0.048
         b = -0.1248
@@ -63,8 +107,8 @@ class CRR:
         h = 3.714 * pow(10, -6)
         numerator = a + (c * self.spt_n_value) + (e * pow(self.spt_n_value, 2)) + (g * pow(self.spt_n_value, 3))
         denominator = 1 + (b * self.spt_n_value) + (d * self.spt_n_value ** 2) + (f * self.spt_n_value ** 3) + (h * self.spt_n_value ** 4)
-        crr_value = numerator / denominator
         sigma_1, sigma_0 = self.calculate_stresses()
+
         crr_value = ((numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c * self.boreholed_c
                      * self.rod_length_c * self.sampler_c)
         return round(crr_value,3)
