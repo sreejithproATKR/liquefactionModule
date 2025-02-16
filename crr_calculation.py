@@ -7,8 +7,9 @@ def calculate_depth_correction(sigma_0):
 
 
 class CRR:
-    def __init__(self, data_type, depth, water_table_depth,gamma, unit_weight_water=10, henergy_c=1, boreholed_c=1, rod_length_c=1,
+    def __init__(self, data_type, depth, water_table_depth,gamma, eq_magnitude=7.5, unit_weight_water=10, henergy_c=1, boreholed_c=1, rod_length_c=1,
                  sampler_c=1,fines_content=0, fines_correction_type="No Correction" ,spt_n_value=None, cpt_qc_value=None):
+        self.eq_magnitude = eq_magnitude
         self.fines_correction_type = fines_correction_type
         self.fines_content = fines_content
         self.henergy_c = henergy_c
@@ -23,6 +24,21 @@ class CRR:
         self.spt_n_value = spt_n_value
         self.cpt_qc_value = cpt_qc_value
 
+    def calculate_deltan_3(self):
+        if self.fines_content <=5:
+            deltaN60 = 0.0
+        elif 5 <= self.fines_content <= 35:
+            deltaN60 = 0.24* self.fines_content + 1.20
+        else:
+            deltaN60 = 7.2
+        return deltaN60
+
+    def calculate_deltan_4(self):
+        if self.fines_content <=5:
+            deltaN60 = 0.0
+        else:
+            deltaN60 = 5 <= self.fines_content <= 35
+        return deltaN60
 
     def calculate_alpha_beta_idriss(self):
         if self.fines_content <= 5:
@@ -44,9 +60,10 @@ class CRR:
         elif self.fines_correction_type == "Stark & Olsen, 1995":
             self.spt_n_value = self.star_olsen_corr()
         else:
-            fines_c = self.modified_star_olsen_corr()
+            self.spt_n_value = self.modified_star_olsen_corr()
 
         return self.spt_n_value
+
 
 
     def idriss_seed_corr(self):
@@ -55,11 +72,13 @@ class CRR:
         return corrected_n
 
     def star_olsen_corr(self,):
-        corrected_n = self.fines_content * 0.5
+        deltaN60 = self.calculate_deltan_3()
+        corrected_n = self.spt_n_value + deltaN60
         return corrected_n
 
     def modified_star_olsen_corr(self):
-        corrected_n = self.fines_content * 0.25
+        deltaN60 = self.calculate_deltan_4()
+        corrected_n = self.spt_n_value + deltaN60
         return corrected_n
 
     def calculate_stresses(self):
@@ -73,6 +92,21 @@ class CRR:
 
         return sigma_1, sigma_0
 
+
+    def overburden_corr(self,crr_value):
+
+        k_alpha = 1.0
+        sigma_1, sigma_0 = self.calculate_stresses()
+        sigma_m = (0.65 * sigma_0) / 96.0
+        k_sigma = 0.0068 * pow(sigma_m,2) - 0.1159 * sigma_m + 1.00778
+        corrected_crr = crr_value * k_alpha * k_sigma
+        return corrected_crr
+
+
+    def magnitude_corr(self,crr_value):
+        msf = pow(10,2.24)/pow(self.eq_magnitude,2.56)
+        corrected_crr = crr_value * msf
+        return corrected_crr
 
     def calculate_crr(self):
         """
@@ -111,6 +145,10 @@ class CRR:
 
         crr_value = ((numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c * self.boreholed_c
                      * self.rod_length_c * self.sampler_c)
+
+        crr_value = self.overburden_corr(crr_value)
+        crr_value = self.magnitude_corr(crr_value)
+
         return round(crr_value,3)
 
     def calculate_crr_cpt(self):

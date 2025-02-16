@@ -50,7 +50,7 @@ total_unit_weight_entries = []
 default_unit_weight_water = 10.0
 default_a_max = 1.5
 default_water_table_depth = 2.5
-default_eq_mag = 7.5
+default_eq_mag = 5.0
 default_msf = 1.0
 
 # Create input field for unit weight of water in the left frame
@@ -315,7 +315,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c, fines_correction_type))
+                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c, fines_correction_type,float(eq_mag_entry.get())))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
