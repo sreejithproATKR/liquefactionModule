@@ -209,11 +209,36 @@ rod_length_10_30_rb.grid(row=4, column=3, padx=5, pady=5, sticky='w')
 rod_length_30_rb = ttk.Radiobutton(spt_left_frame, text=">30 m", variable=rod_length_var, value="0.9")
 rod_length_30_rb.grid(row=5, column=3, padx=5, pady=5, sticky='w')
 
-rod_length_c = float(rod_length_var.get())
+def disable_entry(entry):
+    entry.config(state="disabled")
+
+# Add the "Specify" radio button and the text input
+specify_entry = ttk.Entry(spt_left_frame)
+specify_entry.grid(row=7, column=3, padx=5, pady=5, sticky='w')
+specify_entry.insert(0, "0.5")
+disable_entry(specify_entry)
+
+
+
+def enable_text_input():
+    specify_entry.config(state='normal')
+
+
+specify_rb = ttk.Radiobutton(spt_left_frame, text="Specify", variable=rod_length_var, value=specify_entry.get(), command=enable_text_input())
+specify_rb.grid(row=6, column=3, padx=5, pady=5, sticky='w')
+
+
+
+# if rod_length_var == "specify":
+#     rod_length_c = float(specify_entry.get())
+# else:
+#     rod_length_c = float(rod_length_var.get())
 # Function to update rod_length_c
+rod_length_c = float(rod_length_var.get())
 def update_rod_length_c(*args):
     global rod_length_c
     rod_length_c = float(rod_length_var.get())
+    print(rod_length_c)
 # Trace the variable to call update_rod_length_c whenever it changes
 rod_length_var.trace_add("write", update_rod_length_c)
 
@@ -237,6 +262,17 @@ stark_olsen_rb.grid(row=3, column=4, padx=5, pady=5, sticky='w')
 
 mstark_olsen_rb = ttk.Radiobutton(spt_left_frame, text="Modified Stark & Olsen", variable=fines_correction_var, value="Modified Stark & Olsen")
 mstark_olsen_rb.grid(row=4, column=4, padx=5, pady=5, sticky='w')
+
+fines_correction_type = fines_correction_var.get()
+# Function to update fines_correction_type
+def update_fines_correction_type(*args):
+    global fines_correction_type
+    fines_correction_type = fines_correction_var.get()
+    print(fines_correction_type)
+# Trace the variable to call update_fines_correction_type whenever it changes
+fines_correction_var.trace_add("write", update_fines_correction_type)
+
+
 
 # Add radio buttons for Sampler Correction
 sampler_correction_label = ttk.Label(spt_left_frame, text="Sampler Correction:")
@@ -279,7 +315,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c))
+                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c, fines_correction_type))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
