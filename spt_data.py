@@ -1,7 +1,7 @@
 import pandas as pd
 from tkinter import ttk, messagebox
-from csr_calculation import CSR
-from crr_calculation import CRR
+from CSR_Class import CSR
+from CRR_Class import CRR
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 

@@ -76,8 +76,8 @@ from tkinter import filedialog, messagebox
 from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from crr_calculation import calculate_crr
-from csr_calculation import calculate_csr
+from CRR_Class import calculate_crr
+from CSR_Class import calculate_csr
 
 
 def add_crr_column(df):
