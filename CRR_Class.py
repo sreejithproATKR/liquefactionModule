@@ -2,6 +2,7 @@ import math
 
 
 def calculate_depth_correction(sigma_0):
+    # sigma_0 = sigma_0/96
     depth_c = (1 / sigma_0) ** 0.5
     return max(min(depth_c, 1.17), 0.4)
 
@@ -63,7 +64,7 @@ class CRR:
             beta = 1.0
         elif 5 < self.fines_content <= 35:
             alpha = math.exp(1.76 - (190 / pow(self.fines_content, 2)))
-            beta = (0.99 + pow(self.fines_content, 1.5)) / 100
+            beta = (0.99 + (pow(self.fines_content, 1.5)) / 1000)
         else:
             alpha = 5.0
             beta = 1.2
@@ -142,7 +143,12 @@ class CRR:
         Returns:
         float: The calculated CRR value.
         """
+        sigma_1, sigma_0 = self.calculate_stresses()
+        self.spt_n_value *= (self.henergy_c * self.boreholed_c * self.sampler_c * self.rod_length_corr()
+                             * calculate_depth_correction(sigma_0))
+
         self.spt_n_value = self.calculate_fines_c()
+
 
         a = 0.048
         b = -0.1248
@@ -155,12 +161,12 @@ class CRR:
         numerator = a + (c * self.spt_n_value) + (e * pow(self.spt_n_value, 2)) + (g * pow(self.spt_n_value, 3))
         denominator = 1 + (b * self.spt_n_value) + (d * self.spt_n_value ** 2) + (f * self.spt_n_value ** 3) + (
                     h * self.spt_n_value ** 4)
-        sigma_1, sigma_0 = self.calculate_stresses()
 
-        crr_value = ((numerator / denominator) * calculate_depth_correction(sigma_0) * self.henergy_c * self.boreholed_c
-                     * self.sampler_c * self.rod_length_corr())
+
+        crr_value = numerator / denominator
 
         crr_value = self.overburden_corr(crr_value)
+
         crr_value = self.magnitude_corr(crr_value)
 
         if crr_value < 0:

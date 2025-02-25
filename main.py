@@ -48,9 +48,9 @@ total_unit_weight_entries = []
 # default_thickness = [2.5, 8.5, 8.0, 2.5]
 # default_unit_weight = [18, 17, 16, 17]
 default_unit_weight_water = 10.0
-default_a_max = 1.5
-default_water_table_depth = 2.5
-default_eq_mag = 5.0
+default_a_max = 0.25
+default_water_table_depth = 0.0
+default_eq_mag = 7.5
 default_msf = 1.0
 default_manual_fs = 1.0
 
@@ -143,10 +143,10 @@ energy_ratio_label = ttk.Label(spt_left_frame, text="Type of Hammer:")
 energy_ratio_label.grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
 energy_ratio_var = tk.StringVar()
-energy_ratio_var.set("0.89")
+energy_ratio_var.set("0.88")
 
 safety_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Safety Hammer", variable=energy_ratio_var,
-                                   value="0.89")
+                                   value="0.88") # Change this value to 0.89
 safety_hammer_rb.grid(row=1, column=1, padx=5, pady=5, sticky='w')
 
 donut_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Donut Hammer", variable=energy_ratio_var, value="0.73")
@@ -255,7 +255,7 @@ fines_correction_label = ttk.Label(spt_left_frame, text="Fines Correction:")
 fines_correction_label.grid(row=0, column=4, padx=5, pady=5, sticky='w')
 
 fines_correction_var = tk.StringVar()
-fines_correction_var.set("No Correction")
+fines_correction_var.set("Idriss & Seed, 1997")
 
 no_correction_rb = ttk.Radiobutton(spt_left_frame, text="No Correction", variable=fines_correction_var,
                                      value="No Correction")
