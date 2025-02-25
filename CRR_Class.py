@@ -2,10 +2,10 @@ import math
 
 
 def calculate_depth_correction(sigma_0):
-    # sigma_0 = sigma_0/96
+    sigma_0 = sigma_0/96
     depth_c = (1 / sigma_0) ** 0.5
-    return max(min(depth_c, 1.17), 0.4)
-
+    # return max(min(depth_c, 1.7), 0.4)
+    return 1.0
 
 class CRR:
     def __init__(self, data_type, depth, offset, water_table_depth, gamma, eq_magnitude=7.5, unit_weight_water=10,
@@ -114,6 +114,7 @@ class CRR:
         sigma_1, sigma_0 = self.calculate_stresses()
         sigma_m = (0.65 * sigma_0) / 96.0
         k_sigma = 0.0068 * pow(sigma_m, 2) - 0.1159 * sigma_m + 1.00778
+        k_sigma = min(k_sigma,1)
         corrected_crr = crr_value * k_alpha * k_sigma
         return corrected_crr
 
@@ -174,7 +175,7 @@ class CRR:
         else:
             crr_value = min(crr_value, 2.0)
 
-        return round(crr_value, 3)
+        return round(crr_value, 8)
 
     def calculate_crr_cpt(self):
         """

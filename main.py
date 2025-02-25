@@ -41,12 +41,7 @@ left_frame.grid(row=0, column=0, padx=10, pady=10)
 right_frame = ttk.Frame(general_frame)
 right_frame.grid(row=0, column=1, padx=10, pady=10)
 
-# Create input fields for soil layers in the left frame
-thickness_entries = []
-total_unit_weight_entries = []
 
-# default_thickness = [2.5, 8.5, 8.0, 2.5]
-# default_unit_weight = [18, 17, 16, 17]
 default_unit_weight_water = 10.0
 default_a_max = 0.25
 default_water_table_depth = 0.0
@@ -143,10 +138,10 @@ energy_ratio_label = ttk.Label(spt_left_frame, text="Type of Hammer:")
 energy_ratio_label.grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
 energy_ratio_var = tk.StringVar()
-energy_ratio_var.set("0.88")
+energy_ratio_var.set("1.0")
 
 safety_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Safety Hammer", variable=energy_ratio_var,
-                                   value="0.88") # Change this value to 0.89
+                                   value="1.0") # Change this value to 0.89
 safety_hammer_rb.grid(row=1, column=1, padx=5, pady=5, sticky='w')
 
 donut_hammer_rb = ttk.Radiobutton(spt_left_frame, text="Donut Hammer", variable=energy_ratio_var, value="0.73")
