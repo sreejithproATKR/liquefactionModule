@@ -1,5 +1,6 @@
 class CSR:
-    def __init__(self, depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1,current_sigma_0, current_depth):
+    def __init__(self, depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1,current_sigma_0, current_depth,manual_fs):
+        self.manual_fs = manual_fs
         self.current_sigma_0 = current_sigma_0
         self.current_sigma_1 = current_sigma_1
         self.current_depth = current_depth
@@ -47,4 +48,7 @@ class CSR:
         # Calculate CSR using the given formula
         gamma_d = self.calculate_gamma_d()
         csr_value = 0.65 * (sigma_1 / sigma_0) * self.peak_acceleration * gamma_d
+        csr_value = csr_value * self.manual_fs
+        csr_value = min(csr_value,2.0)
+
         return sigma_1, sigma_0, round(csr_value,2)

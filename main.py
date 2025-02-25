@@ -52,6 +52,7 @@ default_a_max = 1.5
 default_water_table_depth = 2.5
 default_eq_mag = 5.0
 default_msf = 1.0
+default_manual_fs = 1.0
 
 # Create input field for unit weight of water in the left frame
 ttk.Label(left_frame, text="Unit Weight of Water (kN/m³):").grid(row=1, column=0, padx=5, pady=5, sticky = 'w')
@@ -89,6 +90,13 @@ msf_entry = ttk.Entry(left_frame)
 msf_entry.grid(row=4, column=3, padx=5, pady=5, sticky = 'w')
 msf_entry.insert(0, str(default_msf))
 msf = float(eq_mag_entry.get())
+
+# Create input field for Manual FS in the left frame
+ttk.Label(left_frame, text="Manual Factor of Safety:").grid(row=5, column=0, padx=5, pady=5, sticky = 'w')
+manual_fs_entry = ttk.Entry(left_frame)
+manual_fs_entry.grid(row=5, column=1, padx=5, pady=5, sticky = 'w')
+manual_fs_entry.insert(0, str(default_manual_fs))
+manual_fs = float(manual_fs_entry.get())
 
 # Add radio buttons for selecting SPT or CPT data
 data_type_label = ttk.Label(left_frame, text="Select Data Type:")
@@ -186,61 +194,61 @@ def update_boreholed_c(*args):
 # Trace the variable to call update_boreholed_c whenever it changes
 borehole_diameter_var.trace_add("write", update_boreholed_c)
 
-# Add radio buttons for Rod Length
-rod_length_label = ttk.Label(spt_left_frame, text="Rod Length:")
-rod_length_label.grid(row=0, column=3, padx=5, pady=5, sticky='w')
-
-rod_length_var = tk.StringVar()
-rod_length_var.set("0.75")
-
-rod_length_3_4_rb = ttk.Radiobutton(spt_left_frame, text="3 m to 4 m", variable=rod_length_var, value="0.75")
-rod_length_3_4_rb.grid(row=1, column=3, padx=5, pady=5, sticky='w')
-
-rod_length_4_6_rb = ttk.Radiobutton(spt_left_frame, text="4 m to 6 m", variable=rod_length_var, value="0.85")
-rod_length_4_6_rb.grid(row=2, column=3, padx=5, pady=5, sticky='w')
-
-rod_length_6_10_rb = ttk.Radiobutton(spt_left_frame, text="6 m to 10 m", variable=rod_length_var, value="0.95")
-rod_length_6_10_rb.grid(row=3, column=3, padx=5, pady=5, sticky='w')
-
-rod_length_10_30_rb = ttk.Radiobutton(spt_left_frame, text="10 m to 30 m", variable=rod_length_var,
-                                      value="1.0")
-rod_length_10_30_rb.grid(row=4, column=3, padx=5, pady=5, sticky='w')
-
-rod_length_30_rb = ttk.Radiobutton(spt_left_frame, text=">30 m", variable=rod_length_var, value="0.9")
-rod_length_30_rb.grid(row=5, column=3, padx=5, pady=5, sticky='w')
-
-def disable_entry(entry):
-    entry.config(state="disabled")
-
-# Add the "Specify" radio button and the text input
-specify_entry = ttk.Entry(spt_left_frame)
-specify_entry.grid(row=7, column=3, padx=5, pady=5, sticky='w')
-specify_entry.insert(0, "0.5")
-disable_entry(specify_entry)
-
-
-
-def enable_text_input():
-    specify_entry.config(state='normal')
-
-
-specify_rb = ttk.Radiobutton(spt_left_frame, text="Specify", variable=rod_length_var, value=specify_entry.get(), command=enable_text_input())
-specify_rb.grid(row=6, column=3, padx=5, pady=5, sticky='w')
-
-
-
-# if rod_length_var == "specify":
-#     rod_length_c = float(specify_entry.get())
-# else:
+# # Add radio buttons for Rod Length
+# rod_length_label = ttk.Label(spt_left_frame, text="Rod Length:")
+# rod_length_label.grid(row=0, column=3, padx=5, pady=5, sticky='w')
+#
+# rod_length_var = tk.StringVar()
+# rod_length_var.set("0.75")
+#
+# rod_length_3_4_rb = ttk.Radiobutton(spt_left_frame, text="3 m to 4 m", variable=rod_length_var, value="0.75")
+# rod_length_3_4_rb.grid(row=1, column=3, padx=5, pady=5, sticky='w')
+#
+# rod_length_4_6_rb = ttk.Radiobutton(spt_left_frame, text="4 m to 6 m", variable=rod_length_var, value="0.85")
+# rod_length_4_6_rb.grid(row=2, column=3, padx=5, pady=5, sticky='w')
+#
+# rod_length_6_10_rb = ttk.Radiobutton(spt_left_frame, text="6 m to 10 m", variable=rod_length_var, value="0.95")
+# rod_length_6_10_rb.grid(row=3, column=3, padx=5, pady=5, sticky='w')
+#
+# rod_length_10_30_rb = ttk.Radiobutton(spt_left_frame, text="10 m to 30 m", variable=rod_length_var,
+#                                       value="1.0")
+# rod_length_10_30_rb.grid(row=4, column=3, padx=5, pady=5, sticky='w')
+#
+# rod_length_30_rb = ttk.Radiobutton(spt_left_frame, text=">30 m", variable=rod_length_var, value="0.9")
+# rod_length_30_rb.grid(row=5, column=3, padx=5, pady=5, sticky='w')
+#
+# def disable_entry(entry):
+#     entry.config(state="disabled")
+#
+# # Add the "Specify" radio button and the text input
+# specify_entry = ttk.Entry(spt_left_frame)
+# specify_entry.grid(row=7, column=3, padx=5, pady=5, sticky='w')
+# specify_entry.insert(0, "0.5")
+# disable_entry(specify_entry)
+#
+#
+#
+# def enable_text_input():
+#     specify_entry.config(state='normal')
+#
+#
+# specify_rb = ttk.Radiobutton(spt_left_frame, text="Specify", variable=rod_length_var, value=specify_entry.get(), command=enable_text_input())
+# specify_rb.grid(row=6, column=3, padx=5, pady=5, sticky='w')
+#
+#
+#
+# # if rod_length_var == "specify":
+# #     rod_length_c = float(specify_entry.get())
+# # else:
+# #     rod_length_c = float(rod_length_var.get())
+# # Function to update rod_length_c
+# rod_length_c = float(rod_length_var.get())
+# def update_rod_length_c(*args):
+#     global rod_length_c
 #     rod_length_c = float(rod_length_var.get())
-# Function to update rod_length_c
-rod_length_c = float(rod_length_var.get())
-def update_rod_length_c(*args):
-    global rod_length_c
-    rod_length_c = float(rod_length_var.get())
-    print(rod_length_c)
-# Trace the variable to call update_rod_length_c whenever it changes
-rod_length_var.trace_add("write", update_rod_length_c)
+#     print(rod_length_c)
+# # Trace the variable to call update_rod_length_c whenever it changes
+# rod_length_var.trace_add("write", update_rod_length_c)
 
 # Add radio buttons for Fines Correction
 fines_correction_label = ttk.Label(spt_left_frame, text="Fines Correction:")
@@ -276,18 +284,18 @@ fines_correction_var.trace_add("write", update_fines_correction_type)
 
 # Add radio buttons for Sampler Correction
 sampler_correction_label = ttk.Label(spt_left_frame, text="Sampler Correction:")
-sampler_correction_label.grid(row=0, column=5, padx=5, pady=5, sticky='w')
+sampler_correction_label.grid(row=0, column=3, padx=5, pady=5, sticky='w')
 
 sampler_correction_var = tk.StringVar()
 sampler_correction_var.set("1.0")
 
 standard_sampler_rb = ttk.Radiobutton(spt_left_frame, text="Standard Sampler", variable=sampler_correction_var,
                                      value="1.0")
-standard_sampler_rb.grid(row=1, column=5, padx=5, pady=5, sticky='w')
+standard_sampler_rb.grid(row=1, column=3, padx=5, pady=5, sticky='w')
 
 standard_sampler_liner_rb = ttk.Radiobutton(spt_left_frame, text="Sampler Without Liners", variable=sampler_correction_var,
                                      value="1.2")
-standard_sampler_liner_rb.grid(row=2, column=5, padx=5, pady=5, sticky='w')
+standard_sampler_liner_rb.grid(row=2, column=3, padx=5, pady=5, sticky='w')
 
 
 sampler_c = float(sampler_correction_var.get())
@@ -309,18 +317,21 @@ load_button.grid(row=0, column=0, padx=5, pady=5)
 calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  float(a_max_entry.get())))
+                                                                                                                  float(a_max_entry.get()),float(manual_fs_entry.get())))
 calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c,boreholed_c, rod_length_c, sampler_c, fines_correction_type,float(eq_mag_entry.get())))
+                                                                                                                  henergy_c,boreholed_c, sampler_c, fines_correction_type,float(eq_mag_entry.get())))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
 plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_crr_csr_vs_depth(spt_rightB_frame, spt_data))
 plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
+
+export_button = ttk.Button(spt_left_frame, text="Export", command=lambda: plot_crr_csr_vs_depth(spt_rightB_frame, spt_data))
+export_button.grid(row=4, column=0, padx=5, pady=5, sticky='w')
 # Run the application
 
 # sv_ttk.set_theme("dark")
