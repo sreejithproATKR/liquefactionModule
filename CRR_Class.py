@@ -1,17 +1,22 @@
 import math
 
 
-def calculate_depth_correction(sigma_0):
-    sigma_0 = sigma_0/96
-    depth_c = (1 / sigma_0) ** 0.5
-    # return max(min(depth_c, 1.7), 0.4)
-    return 1.0
+def calculate_depth_correction(sigma_0, overburden_corr_cap):
+    if overburden_corr_cap == 1.0:
+        return 1.0
+    else:
+        sigma_0 = sigma_0 / 96
+        depth_c = (1 / sigma_0) ** 0.5
+        return max(min(depth_c, 1.7), 0.4)
+
+
 
 class CRR:
-    def __init__(self, data_type, depth, offset, water_table_depth, gamma, eq_magnitude=7.5, unit_weight_water=10,
+    def __init__(self, data_type, depth, offset, overburden_corr_cap, water_table_depth, gamma, eq_magnitude=7.5, unit_weight_water=10,
                  henergy_c=1, boreholed_c=1,
                  sampler_c=1, fines_content=0, fines_correction_type="No Correction", spt_n_value=None,
                  cpt_qc_value=None):
+        self.overburden_corr_cap = overburden_corr_cap
         self.offset = offset
         self.eq_magnitude = eq_magnitude
         self.fines_correction_type = fines_correction_type
@@ -145,8 +150,9 @@ class CRR:
         float: The calculated CRR value.
         """
         sigma_1, sigma_0 = self.calculate_stresses()
+        depth_correction = calculate_depth_correction(sigma_0,self.overburden_corr_cap)
         self.spt_n_value *= (self.henergy_c * self.boreholed_c * self.sampler_c * self.rod_length_corr()
-                             * calculate_depth_correction(sigma_0))
+                             * depth_correction)
 
         self.spt_n_value = self.calculate_fines_c()
 
@@ -175,7 +181,7 @@ class CRR:
         else:
             crr_value = min(crr_value, 2.0)
 
-        return round(crr_value, 8)
+        return round(crr_value, 4)
 
     def calculate_crr_cpt(self):
         """

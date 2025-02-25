@@ -104,7 +104,7 @@ def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_de
         messagebox.showerror("Error", "Failed to load SPT data.")
 
 
-def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth, henergy_c, borehole_diameter_var, sampler_c, fines_correction_type, eq_magnitude):
+def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth, henergy_c, borehole_diameter_var, sampler_c, fines_correction_type, eq_magnitude, overburden_corr_cap):
     """
     Calculate CRR for each SPT data and preview in the given frame.
 
@@ -123,7 +123,7 @@ def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_de
             depth = row['Depth']
             gamma = row['Gamma']
             fines_content = row["Fines"]
-            crr_calculator = CRR("SPT", depth, 0, water_table_depth, gamma,eq_magnitude, unit_weight_water,henergy_c,borehole_diameter_var,
+            crr_calculator = CRR("SPT", depth, 0, overburden_corr_cap, water_table_depth, gamma,eq_magnitude, unit_weight_water,henergy_c,borehole_diameter_var,
                                  sampler_c,fines_content,fines_correction_type, spt_n_value)
             crr_value = crr_calculator.calculate_crr_spt()
             crr_values.append(crr_value)

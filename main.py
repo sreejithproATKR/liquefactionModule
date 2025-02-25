@@ -163,6 +163,28 @@ def update_henergy_c(*args):
 energy_ratio_var.trace_add("write", update_henergy_c)
 
 
+overburden_corr_val = tk.IntVar()
+overburden_corr_val.set(0)
+
+overburden_corr_tick = ttk.Checkbutton(spt_left_frame, text="Set Overburden", variable=overburden_corr_val)
+overburden_corr_tick.grid(row=4, column=1, padx=5, pady=0, sticky='w')
+
+ttk.Label(spt_left_frame, text="Correction (Cn) = 1?").grid(row=5, column=1, padx=23, pady=0, sticky = 'w')
+
+overburden_corr_cap = overburden_corr_val.get()
+
+def set_overburden_corr_val(*args):
+    global overburden_corr_cap
+    if overburden_corr_val.get():
+        overburden_corr_cap = 1
+        print(overburden_corr_cap)
+    else:
+        overburden_corr_cap = 0
+        print(overburden_corr_cap)
+# Trace the variable to call set_overburden_corr_val whenever it changes
+overburden_corr_val.trace_add("write", set_overburden_corr_val)
+
+
 
 # Add radio buttons for Borehole Diameter
 borehole_diameter_label = ttk.Label(spt_left_frame, text="Borehole Diameter:")
@@ -318,7 +340,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
                                                                                                                   float(unit_weight_water_entry.get()),
                                                                                                                   float(water_table_depth_entry.get()),
-                                                                                                                  henergy_c,boreholed_c, sampler_c, fines_correction_type,float(eq_mag_entry.get())))
+                                                                                                                  henergy_c,boreholed_c, sampler_c, fines_correction_type,float(eq_mag_entry.get()), overburden_corr_cap))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
