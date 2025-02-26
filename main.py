@@ -2,15 +2,17 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from spt_data import (preview_spt_data, calculate_and_preview_csr, calculate_and_preview_crr, load_spt_data_from_excel,
-                      plot_crr_csr_vs_depth)
+                      plot_crr_csr_vs_depth, export_interpolated_csr_crr, plot_interpolated_output)
 
 # Global variable to store SPT data
 spt_data = None
-
+spt_file_path = None
 # Function to open file dialog and load SPT data
 def load_spt_data_with_dialog(frame):
     global spt_data
+    global spt_file_path
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
+    spt_file_path = file_path
     if file_path:
         spt_data = load_spt_data_from_excel(file_path)
         preview_spt_data(frame, spt_data)
@@ -419,12 +421,16 @@ calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
-plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_crr_csr_vs_depth(spt_rightB_frame, spt_data))
+plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_interpolated_output(spt_rightB_frame, spt_data))
 plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to export the data
-export_button = ttk.Button(spt_left_frame, text="Export", command=lambda: export(spt_rightB_frame, spt_data))
+export_button = ttk.Button(spt_left_frame, text="Export", command=lambda: export_interpolated_csr_crr(spt_file_path,spt_data))
 export_button.grid(row=4, column=0, padx=5, pady=5, sticky='w')
+
+# Create a button to interpolate the data
+# export_button = ttk.Button(spt_left_frame, text="Interpolate", command=lambda: interpolate_output(spt_rightB_frame, spt_data))
+# export_button.grid(row=5, column=0, padx=5, pady=5, sticky='w')
 
 # Run the application
 root.mainloop()
