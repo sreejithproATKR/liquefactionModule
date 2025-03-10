@@ -2,13 +2,12 @@ import math
 
 
 def calculate_depth_correction(sigma_0, overburden_corr_cap):
-    if overburden_corr_cap == 1.0:
-        return 1.0
-    else:
         sigma_0 = sigma_0 / 96
         depth_c = (1 / sigma_0) ** 0.5
-        return max(min(depth_c, 1.7), 0.4)
-
+        if depth_c > 1.0 and overburden_corr_cap == 1.0:
+            return 1.0
+        else:
+            return min(depth_c,1.7)
 
 
 class CRR:
@@ -33,7 +32,7 @@ class CRR:
         self.cpt_qc_value = cpt_qc_value
 
     def rod_length_corr(self):
-
+        self.offset = 1.5
         if self.depth + self.offset < 3.0:
             rod_length_c = 0.75
         elif 3.0 < self.depth + self.offset < 4.0:
@@ -166,8 +165,8 @@ class CRR:
         g = -1.673 * pow(10, -5)
         h = 3.714 * pow(10, -6)
         numerator = a + (c * self.spt_n_value) + (e * pow(self.spt_n_value, 2)) + (g * pow(self.spt_n_value, 3))
-        denominator = 1 + (b * self.spt_n_value) + (d * self.spt_n_value ** 2) + (f * self.spt_n_value ** 3) + (
-                    h * self.spt_n_value ** 4)
+        denominator = 1 + (b * self.spt_n_value) + (d * pow(self.spt_n_value,2)) + (f * pow(self.spt_n_value,3)) + (
+                    h * pow(self.spt_n_value,4))
 
 
         crr_value = numerator / denominator
@@ -181,7 +180,7 @@ class CRR:
         else:
             crr_value = min(crr_value, 2.0)
 
-        return round(crr_value, 4)
+        return round(crr_value, 2)
 
     def calculate_crr_cpt(self):
         """

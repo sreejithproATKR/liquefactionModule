@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.signal import savgol_filter
 
 def load_spt_data_from_excel(file_path):
     """
@@ -132,12 +133,41 @@ def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_de
 
         spt_data["CRR"] = crr_values
 
+        if 'CSR' in spt_data.columns:
+            # Calculate the ratio CRR/CSR as FOS
+            spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
+            spt_data['FOS'] = spt_data['FOS'].round(2).clip(upper = 5.0)
+        else:
+            # Display a messagebox if CSR field does not exist
+            messagebox.showinfo("Error", "Calculate CSR")
+
+
         # Preview the updated SPT data with CSR values
         preview_spt_data(frame, spt_data)
         print(eq_magnitude)
     else:
         messagebox.showerror("Error", "Failed to load SPT data.")
 
+    def calculate_and_preview_fos(frame, spt_data):
+        """
+        Calculate CRR for each SPT data and preview in the given frame.
+
+        Parameters:
+        frame (tk.Frame): The frame to display the CSR data.
+        spt_data (pd.DataFrame): The DataFrame containing SPT data.
+        unit_weight_water (float): Unit weight of water.
+        water_table_depth (float): Water table depth.
+        peak_acceleration (float): Peak horizontal acceleration.
+        """
+        if spt_data is not None:
+            # Calculate CSR for each depth and add it to the DataFrame
+            fos_values = []
+            spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
+            # Preview the updated SPT data with CSR values
+            preview_spt_data(frame, spt_data)
+
+        else:
+            messagebox.showerror("Error", "Failed to load SPT data.")
 
 def plot_crr_csr_vs_depth(frame, spt_data):
     """
@@ -227,10 +257,23 @@ def interpolate_output(spt_data):
     new_crr = interp_func_crr(new_depth)
     new_csr = interp_func_csr(new_depth)
 
+
     new_crr = np.maximum(new_crr, 0)
 
     spt_data_interpolated = pd.DataFrame(
         {'Depth': new_depth.round(1), 'Interpolated CRR': np.round(new_crr,decimals = 2), 'Interpolated CSR': np.round(new_csr,decimals = 2)})
+    spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated CRR'] / spt_data_interpolated['Interpolated CSR']
+    spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated FOS'].round(2).clip(upper=5.0)
+
+    window_size = 5
+    poly_order = 3
+
+    # Smooth CSR, CRR, and FOS columns
+    spt_data_interpolated['CSR_smooth'] = savgol_filter(spt_data_interpolated['Interpolated CSR'], window_size, poly_order)
+    spt_data_interpolated['CRR_smooth'] = savgol_filter(spt_data_interpolated['Interpolated CRR'], window_size, poly_order)
+    spt_data_interpolated['FOS_smooth'] = savgol_filter(spt_data_interpolated['Interpolated FOS'], window_size, poly_order)
+
+
     return spt_data_interpolated
 
 def plot_interpolated_output(frame, spt_data):
@@ -245,9 +288,12 @@ def plot_interpolated_output(frame, spt_data):
         ax.cla()
         ax.plot(spt_data['CRR'], spt_data['Depth'], 'o', label='Original CRR')
         ax.plot(spt_data['CSR'], spt_data['Depth'], '*', label='Original CSR')
-        ax.plot(spt_data_interpolated['Interpolated CRR'], spt_data_interpolated['Depth'], '-', label='Interpolated CRR')
-        ax.plot(spt_data_interpolated['Interpolated CSR'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
-        ax.set_xlabel('CRR/CSR')
+        ax.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CRR')
+        ax.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
+        ax.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated FOS')
+        # ax.plot(spt_data_interpolated['Interpolated CSR'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
+        # ax.plot(spt_data_interpolated['Interpolated FOS'], spt_data_interpolated['Depth'], '-',label='Interpolated FOS')
+        ax.set_xlabel('CRR - CSR - FOS')
         ax.set_ylabel('Depth')
         ax.invert_yaxis()
         ax.legend()
