@@ -65,17 +65,11 @@ water_table_depth_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
 water_table_depth_entry.insert(0, str(default_water_table_depth))
 water_table_depth = float(water_table_depth_entry.get())
 
-# Define the function to toggle the state of the Water Table Depth entry
-def toggle_water_table_depth():
-    if water_table_depth_entry['state'] == 'normal':
-        water_table_depth_entry.config(state='disabled')
-    else:
-        water_table_depth_entry.config(state='normal')
 
 # Add Checkbutton for Water Table Depth Status
 water_table_depth_stat_val = tk.IntVar()
-water_table_depth_stat_val.set(0)
-water_table_depth_stat_tick = ttk.Checkbutton(left_frame, text="Borehole Specific", variable=water_table_depth_stat_val)
+water_table_depth_stat_val.set(1)
+water_table_depth_stat_tick = ttk.Checkbutton(left_frame, text="Borehole Specific", variable=water_table_depth_stat_val)#, command=toggle_water_table_depth)
 water_table_depth_stat_tick.grid(row=2, column=2, padx=5, pady=5, sticky='w')
 
 
@@ -88,16 +82,14 @@ def set_water_table_depth_stat_val(*args):
     global water_table_depth_stat
     if water_table_depth_stat_val.get():
         water_table_depth_stat = 1
+        water_table_depth_entry.config(state='disabled')
         print(water_table_depth_stat)
     else:
         water_table_depth_stat = 0
+        water_table_depth_entry.config(state='normal')
 
 # Trace the variable to call set_overburden_corr_val whenever it changes
 water_table_depth_stat_val.trace_add("write", set_water_table_depth_stat_val)
-
-
-
-
 
 # Create input field for a_max in the left frame
 ttk.Label(left_frame, text="Peak Horizontal Acceleration (a_max):").grid(row=3, column=0, padx=5, pady=5, sticky='w')
@@ -456,7 +448,7 @@ calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
     float(unit_weight_water_entry.get()),
     float(water_table_depth_entry.get()),
-    henergy_c, boreholed_c, sampler_c, fines_correction_type, float(eq_mag_entry.get()), overburden_corr_cap))
+    henergy_c, boreholed_c, sampler_c, fines_correction_type, float(eq_mag_entry.get()), overburden_corr_cap,water_table_depth_stat))
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
