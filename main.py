@@ -56,12 +56,48 @@ unit_weight_water_entry.grid(row=1, column=1, padx=5, pady=5, sticky='w')
 unit_weight_water_entry.insert(0, str(default_unit_weight_water))
 unit_weight_water = float(unit_weight_water_entry.get())
 
+
+
 # Create input field for water table depth in the left frame
 ttk.Label(left_frame, text="Water Table Depth (m):").grid(row=2, column=0, padx=5, pady=5, sticky='w')
 water_table_depth_entry = ttk.Entry(left_frame)
 water_table_depth_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
 water_table_depth_entry.insert(0, str(default_water_table_depth))
 water_table_depth = float(water_table_depth_entry.get())
+
+# Define the function to toggle the state of the Water Table Depth entry
+def toggle_water_table_depth():
+    if water_table_depth_entry['state'] == 'normal':
+        water_table_depth_entry.config(state='disabled')
+    else:
+        water_table_depth_entry.config(state='normal')
+
+# Add Checkbutton for Water Table Depth Status
+water_table_depth_stat_val = tk.IntVar()
+water_table_depth_stat_val.set(0)
+water_table_depth_stat_tick = ttk.Checkbutton(left_frame, text="Borehole Specific", variable=water_table_depth_stat_val)
+water_table_depth_stat_tick.grid(row=2, column=2, padx=5, pady=5, sticky='w')
+
+
+
+# Variable to hold the water table stat value
+water_table_depth_stat = water_table_depth_stat_val.get()
+
+# Function to update overburden_corr_cap
+def set_water_table_depth_stat_val(*args):
+    global water_table_depth_stat
+    if water_table_depth_stat_val.get():
+        water_table_depth_stat = 1
+        print(water_table_depth_stat)
+    else:
+        water_table_depth_stat = 0
+
+# Trace the variable to call set_overburden_corr_val whenever it changes
+water_table_depth_stat_val.trace_add("write", set_water_table_depth_stat_val)
+
+
+
+
 
 # Create input field for a_max in the left frame
 ttk.Label(left_frame, text="Peak Horizontal Acceleration (a_max):").grid(row=3, column=0, padx=5, pady=5, sticky='w')
@@ -77,12 +113,12 @@ eq_mag_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 eq_mag_entry.insert(0, str(default_eq_mag))
 eq_mag = float(eq_mag_entry.get())
 
-# Create input field for magnitude in the left frame
-ttk.Label(left_frame, text="or Magnitude Correction Factor (MSF):").grid(row=4, column=2, padx=5, pady=5, sticky='w')
-msf_entry = ttk.Entry(left_frame)
-msf_entry.grid(row=4, column=3, padx=5, pady=5, sticky='w')
-msf_entry.insert(0, str(default_msf))
-msf = float(eq_mag_entry.get())
+# # Create input field for magnitude in the left frame
+# ttk.Label(left_frame, text="or Magnitude Correction Factor (MSF):").grid(row=4, column=2, padx=5, pady=5, sticky='w')
+# msf_entry = ttk.Entry(left_frame)
+# msf_entry.grid(row=4, column=3, padx=5, pady=5, sticky='w')
+# msf_entry.insert(0, str(default_msf))
+# msf = float(eq_mag_entry.get())
 
 # Create input field for Manual FS in the left frame
 ttk.Label(left_frame, text="Manual Factor of Safety:").grid(row=5, column=0, padx=5, pady=5, sticky='w')
@@ -98,7 +134,7 @@ data_type_var = tk.StringVar()
 data_type_combobox = ttk.Combobox(left_frame, textvariable=data_type_var,state='readonly')
 data_type_combobox['values'] = ("SPT", "CPT")
 data_type_combobox.current(0)  # Set default value to "SPT"
-data_type_combobox.grid(row=2, column=2, padx=10, pady=10, sticky='w')
+data_type_combobox.grid(row=1, column=3, padx=10, pady=10, sticky='w')
 
 def toggle_tabs(*args):
     if data_type_var.get() == "SPT":
@@ -115,6 +151,8 @@ toggle_tabs()  # Initialize the tabs based on the default selection
 # Create frames for left and right columns in the SPT details tab
 spt_left_frame = ttk.Frame(spt_details_frame)
 spt_left_frame.grid(row=0, column=0, padx=10, pady=10)
+spt_leftB_frame = ttk.Frame(spt_details_frame)
+spt_leftB_frame.grid(row=1, column=0, padx=10, pady=10)
 spt_right_frame = ttk.Frame(spt_details_frame)
 spt_right_frame.grid(row=0, column=1, padx=10, pady=10)
 spt_rightB_frame = ttk.Frame(spt_details_frame)
@@ -411,7 +449,7 @@ load_button.grid(row=0, column=0, padx=5, pady=5)
 calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame, spt_data,
     float(unit_weight_water_entry.get()),
     float(water_table_depth_entry.get()),
-    float(a_max_entry.get()), float(manual_fs_entry.get())))
+    float(a_max_entry.get()), float(manual_fs_entry.get()),water_table_depth_stat))
 calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to calculate CRR
@@ -422,7 +460,7 @@ calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=
 calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
-plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_interpolated_output(spt_rightB_frame, spt_data))
+plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_interpolated_output(spt_leftB_frame, spt_rightB_frame, spt_data))
 plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to export the data

@@ -8,6 +8,8 @@ import os
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
+import findVolumetricStrain
+
 
 def load_spt_data_from_excel(file_path):
     """
@@ -72,7 +74,7 @@ def preview_spt_data(frame, spt_data):
         messagebox.showerror("Error", "Failed to load SPT data.")
 
 
-def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_depth, peak_acceleration,manual_fs):
+def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_depth, peak_acceleration,manual_fs, water_table_depth_stat):
     """
     Calculate CSR for each depth in SPT data and preview in the given frame.
 
@@ -94,6 +96,11 @@ def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_de
         for index, row in spt_data.iterrows():
             depth = row["Depth"]
             gamma = row["Gamma"]
+            if water_table_depth_stat == 1:
+                water_table_depth = row["GWL"]
+            else:
+                water_table_depth = water_table_depth
+
             csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1, current_sigma_0,current_depth,manual_fs)
             current_sigma_1,current_sigma_0, csr_value = csr_calculator.calculate_csr()
             csr_values.append(csr_value)
@@ -230,6 +237,11 @@ def export_interpolated_csr_crr(file_path,spt_data):
 
     pass
 
+# Define the function to calculate volumetric strain for each row
+def calculate_volumetric_strain_for_row(row):
+    return findVolumetricStrain.calculate_volumetric_strain(row['Interpolated SPT'], row['Interpolated Fines'], row['Interpolated FOS'])
+
+
 def interpolate_output(spt_data):
 
     spt_data_interpolated = spt_data.copy()
@@ -246,9 +258,11 @@ def interpolate_output(spt_data):
     # Interpolation function
     interp_func_crr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CRR'], kind='cubic')
     interp_func_csr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CSR'], kind='cubic')
+    interp_func_fines = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['Fines'], kind='cubic')
+    interp_func_spt = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['SPT'], kind='cubic')
 
     # New depth values from min to max depth rounded to whole numbers with intervals of 0.1m
-    new_depth = np.arange(min(spt_data_interpolated['Depth']), int(max(spt_data_interpolated['Depth'])) + 1, 0.1)
+    new_depth = np.arange(min(spt_data_interpolated['Depth']), int(max(spt_data_interpolated['Depth'])) + 10, 0.1)
 
     # Ensure new_depth does not exceed the maximum depth in the provided data
     new_depth = new_depth[new_depth <= max(spt_data_interpolated['Depth'])]
@@ -256,12 +270,15 @@ def interpolate_output(spt_data):
     # Interpolated CRR values
     new_crr = interp_func_crr(new_depth)
     new_csr = interp_func_csr(new_depth)
+    new_fines = interp_func_fines(new_depth)
+    new_spt = interp_func_spt(new_depth)
 
 
     new_crr = np.maximum(new_crr, 0)
 
     spt_data_interpolated = pd.DataFrame(
-        {'Depth': new_depth.round(1), 'Interpolated CRR': np.round(new_crr,decimals = 2), 'Interpolated CSR': np.round(new_csr,decimals = 2)})
+        {'Depth': new_depth.round(1), 'Interpolated CRR': np.round(new_crr,decimals = 2), 'Interpolated CSR': np.round(new_csr,decimals = 2)
+            ,'Interpolated SPT': np.round(new_spt,decimals = 0),'Interpolated Fines': np.round(new_csr,decimals = 2)})
     spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated CRR'] / spt_data_interpolated['Interpolated CSR']
     spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated FOS'].round(2).clip(upper=5.0)
 
@@ -273,35 +290,57 @@ def interpolate_output(spt_data):
     spt_data_interpolated['CRR_smooth'] = savgol_filter(spt_data_interpolated['Interpolated CRR'], window_size, poly_order)
     spt_data_interpolated['FOS_smooth'] = savgol_filter(spt_data_interpolated['Interpolated FOS'], window_size, poly_order)
 
+    spt_data_interpolated['FOS_smooth'] = spt_data_interpolated['FOS_smooth'].clip(lower=0).clip(upper=5)
+    spt_data_interpolated['CRR_smooth'] = spt_data_interpolated['CRR_smooth'].clip(lower=0).clip(upper=2)
+
+
+    spt_data_interpolated['Volumetric Strain'] = spt_data_interpolated.apply(calculate_volumetric_strain_for_row, axis=1)
+    spt_data_interpolated['Settlement'] = (spt_data_interpolated['Volumetric Strain']/100)*0.1
+    spt_data_interpolated['Total Settlement'] = (spt_data_interpolated['Settlement'].cumsum())*1000
+
 
     return spt_data_interpolated
 
-def plot_interpolated_output(frame, spt_data):
+def plot_interpolated_output(frame1, frame2, spt_data):
     if spt_data is not None:
-        for widget in frame.winfo_children():
+        for widget in frame1.winfo_children():
             widget.destroy()
-        fig, ax = plt.subplots()
+        for widget in frame2.winfo_children():
+            widget.destroy()
+        fig1, ax1 = plt.subplots()
     # Update the copy of the DataFrame with interpolated values
 
         spt_data_interpolated = interpolate_output(spt_data)
     # Plotting the results
-        ax.cla()
-        ax.plot(spt_data['CRR'], spt_data['Depth'], 'o', label='Original CRR')
-        ax.plot(spt_data['CSR'], spt_data['Depth'], '*', label='Original CSR')
-        ax.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CRR')
-        ax.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
-        ax.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated FOS')
-        # ax.plot(spt_data_interpolated['Interpolated CSR'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
-        # ax.plot(spt_data_interpolated['Interpolated FOS'], spt_data_interpolated['Depth'], '-',label='Interpolated FOS')
-        ax.set_xlabel('CRR - CSR - FOS')
-        ax.set_ylabel('Depth')
-        ax.invert_yaxis()
-        ax.legend()
-        ax.set_title('CSR/CRR vs Depth')
+        ax1.cla()
+        ax1.plot(spt_data['CRR'], spt_data['Depth'], 'o', label='Original CRR')
+        ax1.plot(spt_data['CSR'], spt_data['Depth'], '*', label='Original CSR')
+        ax1.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CRR')
+        ax1.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
+        ax1.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated FOS')
+        ax1.set_xlabel('CRR - CSR - FOS')
+        ax1.set_ylabel('Depth')
+        ax1.invert_yaxis()
+        ax1.legend()
+        ax1.set_title('CSR/CRR vs Depth')
         # ax.grid(False)
-        canvas = FigureCanvasTkAgg(fig, master=frame)
+        canvas = FigureCanvasTkAgg(fig1, master=frame1)
         canvas.draw()
         canvas.get_tk_widget().pack()
+
+        fig2, ax2 = plt.subplots()
+        ax2.cla()
+        ax2.plot(spt_data_interpolated['Total Settlement'], spt_data_interpolated['Depth'], '-', label='Settlement')
+        ax2.set_xlabel('Settlement (mm)')
+        ax2.set_ylabel('Depth')
+        ax2.invert_yaxis()
+        ax2.legend()
+        ax2.set_title('Settlement vs Depth')
+
+        canvas = FigureCanvasTkAgg(fig2, master=frame2)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
     else:
         messagebox.showerror("Error", "Failed to load SPT or CPT data.")
 
