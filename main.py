@@ -445,8 +445,8 @@ load_button = ttk.Button(spt_left_frame, text="Load SPT Data", command=lambda: l
 load_button.grid(row=0, column=0, padx=5, pady=5)
 
 def calculate_and_load (*args):
-    global spt_data
-    calculate_and_preview(spt_preview_frame, spt_data,
+    global spt_data  # Add this line to ensure spt_data is updated globally
+    spt_data = calculate_and_preview(spt_preview_frame, spt_data,
                           float(unit_weight_water_entry.get()),
                           float(water_table_depth_entry.get()),
                           float(a_max_entry.get()),

@@ -161,15 +161,42 @@ def determine_volumetric_strain(y, Dr):
 def calculate_volumetric_strain(SPT_N, fines, FOS):
     # Determine Dr from SPT N value
     Dr = determine_Dr(SPT_N)
+    SPT_N = apply_fines_correction(SPT_N, fines)
     # Calculate volumetric strain using the determined Dr and given FOS
     volumetric_strain = max(determine_volumetric_strain(FOS, Dr),0)
     return volumetric_strain
 
 
-# Example usage
-SPT_N = 20  # SPT N value
-fines = None  # Fines (not used in current calculation)
-FOS = 3.5  # Factor of safety
+# Implement fines correction with interpolation
+def apply_fines_correction(SPT_N, fines):
+    # Define the fines correction values
+    fines_correction = {
+        10: 1,
+        25: 1,
+        50: 4,
+        75: 5
+    }
 
-volumetric_strain = calculate_volumetric_strain(SPT_N, fines, FOS)
-print(f"Volumetric strain for SPT N value {SPT_N}, fines {fines}, and factor of safety {FOS} is {volumetric_strain}.")
+    # Find the two nearest fines values in the mapping list
+    lower_fines = max([f for f in fines_correction.keys() if f < fines], default=None)
+    upper_fines = min([f for f in fines_correction.keys() if f > fines], default=None)
+
+    if lower_fines is None:
+        delta_SPT_N = 0
+    elif upper_fines is None:
+        delta_SPT_N = 5
+    else:
+        # Interpolate to find the correction value for the given fines percentage
+        interpolator = interp1d([lower_fines, upper_fines], [fines_correction[lower_fines], fines_correction[upper_fines]])
+        delta_SPT_N = interpolator(fines)
+
+    # Apply the fines correction to the SPT N value
+    SPT_N_corrected = SPT_N + delta_SPT_N
+
+    return SPT_N_corrected
+
+
+# # Example usage
+# SPT_N = 20  # SPT N value
+# fines = None  # Fines (not used in current calculation)
+# FOS = 3.5  # Factor of safety

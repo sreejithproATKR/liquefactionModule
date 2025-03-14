@@ -1,4 +1,5 @@
 import pandas as pd
+import tkinter as tk
 from tkinter import ttk, messagebox
 from CSR_Class import CSR
 from CRR_Class import CRR
@@ -75,14 +76,15 @@ def preview_spt_data(frame, input_spt_data):
         messagebox.showerror("Error", "Failed to load SPT data.")
 
 
-def calculate_and_preview(frame, spt_data, unit_weight_water, water_table_depth, peak_acceleration,
-                              manual_fs, water_table_depth_stat,overburden_corr_cap,eq_magnitude,henergy_c,
-                              borehole_diameter_var,sampler_c,fines_correction_type):
-    if spt_data is not None:
+def calculate_and_preview(frame, input_spt_data, unit_weight_water, water_table_depth, peak_acceleration,
+                          manual_fs, water_table_depth_stat, overburden_corr_cap, eq_magnitude, henergy_c,
+                          borehole_diameter_var, sampler_c, fines_correction_type):
+    global spt_data  # Ensure spt_data is updated globally
+    if input_spt_data is not None:
         # Initialize an empty DataFrame to store the results
         # Group the data by borehole
-        # all_boreholes = pd.DataFrame()
-        grouped = spt_data.groupby('Borehole')
+        all_boreholes = pd.DataFrame()
+        grouped = input_spt_data.groupby('Borehole')
         for borehole, data in grouped:
             current_sigma_1 = 0
             current_sigma_0 = 0
@@ -102,7 +104,6 @@ def calculate_and_preview(frame, spt_data, unit_weight_water, water_table_depth,
                 csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1, current_sigma_0, current_depth, manual_fs)
                 current_sigma_1, current_sigma_0, csr_value = csr_calculator.calculate_csr()
                 csr_values.append(csr_value)
-
                 crr_calculator = CRR("SPT", depth, 0, overburden_corr_cap, water_table_depth, gamma, eq_magnitude,
                                      unit_weight_water, henergy_c, borehole_diameter_var,
                                      sampler_c, fines_content, fines_correction_type, spt_n_value)
@@ -113,15 +114,13 @@ def calculate_and_preview(frame, spt_data, unit_weight_water, water_table_depth,
             data["CRR"] = crr_values
             data["FOS"] = csr_values
             data['FOS'] = data['CRR'] / data['CSR']
-            data['FOS'] = data['FOS'].round(2).clip(upper = 5.0)
-
+            data['FOS'] = data['FOS'].round(2).clip(upper=5.0)
             # Append the CSR data for the current borehole to the final DataFrame
-            spt_data = pd.concat([spt_data, data], ignore_index=True)
-            # spt_data = all_boreholes
-
+            all_boreholes = pd.concat([all_boreholes, data], ignore_index=True)
+            spt_data = all_boreholes
         # Update the global spt_data DataFrame
-        # Preview the updated SPT data with CSR values
         preview_spt_data(frame, spt_data)
+        return spt_data
     else:
         messagebox.showerror("Error", "Failed to load SPT data.")
 
@@ -319,46 +318,50 @@ def interpolate_output(spt_data):
 
     return all_boreholes_interpolated
 
+
 def plot_interpolated_output(frame1, frame2, spt_data):
     if spt_data is not None:
+        # Clear the existing widgets in the frames
         for widget in frame1.winfo_children():
             widget.destroy()
         for widget in frame2.winfo_children():
             widget.destroy()
-        fig1, ax1 = plt.subplots()
-    # Update the copy of the DataFrame with interpolated values
 
+        # Update the copy of the DataFrame with interpolated values
         spt_data_interpolated = interpolate_output(spt_data)
-    # Plotting the results
-        ax1.cla()
-        ax1.plot(spt_data['CRR'], spt_data['Depth'], 'o', label='Original CRR')
-        ax1.plot(spt_data['CSR'], spt_data['Depth'], '*', label='Original CSR')
-        ax1.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='CRR')
-        ax1.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='CSR')
-        ax1.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='FOS')
-        ax1.set_xlabel('CRR - CSR - FOS')
-        ax1.set_ylabel('Depth')
-        ax1.invert_yaxis()
-        ax1.legend()
-        ax1.set_title('CSR/CRR vs Depth')
-        # ax.grid(False)
-        canvas = FigureCanvasTkAgg(fig1, master=frame1)
-        canvas.draw()
-        canvas.get_tk_widget().pack()
+        # Group the interpolated data by borehole
+        grouped = spt_data_interpolated.groupby('Borehole')
 
-        fig2, ax2 = plt.subplots()
-        ax2.cla()
-        ax2.plot(spt_data_interpolated['Total Settlement'], spt_data_interpolated['Depth'], '-', label='Settlement')
-        ax2.set_xlabel('Settlement (mm)')
-        ax2.set_ylabel('Depth')
-        ax2.invert_yaxis()
-        ax2.legend()
-        ax2.set_title('Settlement vs Depth')
+        for borehole, data in grouped:
+            # Create a new window for each borehole plot
+            plot_window = tk.Toplevel()
+            plot_window.title(f'Plots for Borehole {borehole}')
 
-        canvas = FigureCanvasTkAgg(fig2, master=frame2)
-        canvas.draw()
-        canvas.get_tk_widget().pack()
+            # Create a figure for CSR/CRR vs Depth
+            fig1, ax1 = plt.subplots()
+            ax1.plot(data['CRR_smooth'], data['Depth'], '-', label='CRR')
+            ax1.plot(data['CSR_smooth'], data['Depth'], '-', label='CSR')
+            ax1.plot(data['FOS_smooth'], data['Depth'], '-', label='FOS')
+            ax1.set_xlabel('CRR - CSR - FOS')
+            ax1.set_ylabel('Depth')
+            ax1.invert_yaxis()
+            ax1.legend()
+            ax1.set_title(f'CSR/CRR vs Depth for Borehole {borehole}')
+            canvas1 = FigureCanvasTkAgg(fig1, master=plot_window)
+            canvas1.draw()
+            canvas1.get_tk_widget().pack()
 
+            # Create a figure for Settlement vs Depth
+            fig2, ax2 = plt.subplots()
+            ax2.plot(data['Total Settlement'], data['Depth'], '-', label='Settlement')
+            ax2.set_xlabel('Settlement (mm)')
+            ax2.set_ylabel('Depth')
+            ax2.invert_yaxis()
+            ax2.legend()
+            ax2.set_title(f'Settlement vs Depth for Borehole {borehole}')
+            canvas2 = FigureCanvasTkAgg(fig2, master=plot_window)
+            canvas2.draw()
+            canvas2.get_tk_widget().pack()
     else:
         messagebox.showerror("Error", "Failed to load SPT or CPT data.")
 
