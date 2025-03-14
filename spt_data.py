@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 import findVolumetricStrain
 
+# from main import spt_data
 
 def load_spt_data_from_excel(file_path):
     """
@@ -35,7 +36,7 @@ def load_spt_data_from_excel(file_path):
         return None
 
 
-def preview_spt_data(frame, spt_data):
+def preview_spt_data(frame, input_spt_data):
     """
     Preview SPT data in the given frame.
 
@@ -43,7 +44,7 @@ def preview_spt_data(frame, spt_data):
     frame (tk.Frame): The frame to display the SPT data.
     spt_data (pd.DataFrame): The DataFrame containing SPT data.
     """
-    if spt_data is not None:
+    if input_spt_data is not None:
         # Clear the frame
         for widget in frame.winfo_children():
             widget.destroy()
@@ -59,122 +60,133 @@ def preview_spt_data(frame, spt_data):
         # scrollbar.pack(side='right', fill='y')
 
         # Define columns
-        tree["columns"] = list(spt_data.columns)
+        tree["columns"] = list(input_spt_data.columns)
         tree["show"] = "headings"
 
         # Create column headers
-        for col in spt_data.columns:
+        for col in input_spt_data.columns:
             tree.heading(col, text=col)
             tree.column(col, width=100)
 
         # Insert data into the treeview
-        for index, row in spt_data.iterrows():
+        for index, row in input_spt_data.iterrows():
             tree.insert("", "end", values=list(row))
     else:
         messagebox.showerror("Error", "Failed to load SPT data.")
 
 
-def calculate_and_preview_csr(frame, spt_data, unit_weight_water, water_table_depth, peak_acceleration,manual_fs, water_table_depth_stat):
-    """
-    Calculate CSR for each depth in SPT data and preview in the given frame.
-
-    Parameters:
-    frame (tk.Frame): The frame to display the CSR data.
-    spt_data (pd.DataFrame): The DataFrame containing SPT data.
-    unit_weight_water (float): Unit weight of water.
-    water_table_depth (float): Water table depth.
-    peak_acceleration (float): Peak horizontal acceleration.
-    """
-    current_sigma_1 = 0
-    current_sigma_0 = 0
-    current_depth = 0
-    print(manual_fs)
-
+def calculate_and_preview(frame, spt_data, unit_weight_water, water_table_depth, peak_acceleration,
+                              manual_fs, water_table_depth_stat,overburden_corr_cap,eq_magnitude,henergy_c,
+                              borehole_diameter_var,sampler_c,fines_correction_type):
     if spt_data is not None:
-        # Calculate CSR for each depth and add it to the DataFrame
-        csr_values = []
-        for index, row in spt_data.iterrows():
-            depth = row["Depth"]
-            gamma = row["Gamma"]
-            if water_table_depth_stat == 1:
-                water_table_depth = row["GWL"]
-            else:
-                water_table_depth = water_table_depth
-
-            csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1, current_sigma_0,current_depth,manual_fs)
-            current_sigma_1,current_sigma_0, csr_value = csr_calculator.calculate_csr()
-            csr_values.append(csr_value)
-            current_depth = depth
-
-        spt_data["CSR"] = csr_values
-
-        # Preview the updated SPT data with CSR values
-        preview_spt_data(frame, spt_data)
-    else:
-        messagebox.showerror("Error", "Failed to load SPT data.")
-
-
-def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth, henergy_c, borehole_diameter_var, sampler_c, fines_correction_type, eq_magnitude, overburden_corr_cap):
-    """
-    Calculate CRR for each SPT data and preview in the given frame.
-
-    Parameters:
-    frame (tk.Frame): The frame to display the CSR data.
-    spt_data (pd.DataFrame): The DataFrame containing SPT data.
-    unit_weight_water (float): Unit weight of water.
-    water_table_depth (float): Water table depth.
-    peak_acceleration (float): Peak horizontal acceleration.
-    """
-    if spt_data is not None:
-        # Calculate CSR for each depth and add it to the DataFrame
-        crr_values = []
-        for index, row in spt_data.iterrows():
-            spt_n_value = row["SPT"]
-            depth = row['Depth']
-            gamma = row['Gamma']
-            fines_content = row["Fines"]
-            crr_calculator = CRR("SPT", depth, 0, overburden_corr_cap, water_table_depth, gamma,eq_magnitude, unit_weight_water,henergy_c,borehole_diameter_var,
-                                 sampler_c,fines_content,fines_correction_type, spt_n_value)
-            crr_value = crr_calculator.calculate_crr_spt()
-            crr_values.append(crr_value)
-
-        spt_data["CRR"] = crr_values
-
-        if 'CSR' in spt_data.columns:
-            # Calculate the ratio CRR/CSR as FOS
-            spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
-            spt_data['FOS'] = spt_data['FOS'].round(2).clip(upper = 5.0)
-        else:
-            # Display a messagebox if CSR field does not exist
-            messagebox.showinfo("Error", "Calculate CSR")
-
-
-        # Preview the updated SPT data with CSR values
-        preview_spt_data(frame, spt_data)
-        print(eq_magnitude)
-    else:
-        messagebox.showerror("Error", "Failed to load SPT data.")
-
-    def calculate_and_preview_fos(frame, spt_data):
-        """
-        Calculate CRR for each SPT data and preview in the given frame.
-
-        Parameters:
-        frame (tk.Frame): The frame to display the CSR data.
-        spt_data (pd.DataFrame): The DataFrame containing SPT data.
-        unit_weight_water (float): Unit weight of water.
-        water_table_depth (float): Water table depth.
-        peak_acceleration (float): Peak horizontal acceleration.
-        """
-        if spt_data is not None:
+        # Initialize an empty DataFrame to store the results
+        # Group the data by borehole
+        # all_boreholes = pd.DataFrame()
+        grouped = spt_data.groupby('Borehole')
+        for borehole, data in grouped:
+            current_sigma_1 = 0
+            current_sigma_0 = 0
+            current_depth = 0
             # Calculate CSR for each depth and add it to the DataFrame
-            fos_values = []
-            spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
-            # Preview the updated SPT data with CSR values
-            preview_spt_data(frame, spt_data)
+            csr_values = []
+            crr_values = []
+            for index, row in data.iterrows():
+                depth = row["Depth"]
+                gamma = row["Gamma"]
+                spt_n_value = row['SPT']
+                fines_content = row['Fines']
+                if water_table_depth_stat == 1:
+                    water_table_depth = row["GWL"]
+                else:
+                    water_table_depth = water_table_depth
+                csr_calculator = CSR(depth, gamma, unit_weight_water, peak_acceleration, water_table_depth, current_sigma_1, current_sigma_0, current_depth, manual_fs)
+                current_sigma_1, current_sigma_0, csr_value = csr_calculator.calculate_csr()
+                csr_values.append(csr_value)
 
-        else:
-            messagebox.showerror("Error", "Failed to load SPT data.")
+                crr_calculator = CRR("SPT", depth, 0, overburden_corr_cap, water_table_depth, gamma, eq_magnitude,
+                                     unit_weight_water, henergy_c, borehole_diameter_var,
+                                     sampler_c, fines_content, fines_correction_type, spt_n_value)
+                crr_value = crr_calculator.calculate_crr_spt()
+                crr_values.append(crr_value)
+                current_depth = depth
+            data["CSR"] = csr_values
+            data["CRR"] = crr_values
+            data["FOS"] = csr_values
+            data['FOS'] = data['CRR'] / data['CSR']
+            data['FOS'] = data['FOS'].round(2).clip(upper = 5.0)
+
+            # Append the CSR data for the current borehole to the final DataFrame
+            spt_data = pd.concat([spt_data, data], ignore_index=True)
+            # spt_data = all_boreholes
+
+        # Update the global spt_data DataFrame
+        # Preview the updated SPT data with CSR values
+        preview_spt_data(frame, spt_data)
+    else:
+        messagebox.showerror("Error", "Failed to load SPT data.")
+
+
+# def calculate_and_preview_crr(frame, spt_data, unit_weight_water, water_table_depth, henergy_c, borehole_diameter_var, sampler_c, fines_correction_type, eq_magnitude, overburden_corr_cap):
+#     """
+#     Calculate CRR for each SPT data and preview in the given frame.
+#
+#     Parameters:
+#     frame (tk.Frame): The frame to display the CSR data.
+#     spt_data (pd.DataFrame): The DataFrame containing SPT data.
+#     unit_weight_water (float): Unit weight of water.
+#     water_table_depth (float): Water table depth.
+#     peak_acceleration (float): Peak horizontal acceleration.
+#     """
+#     if spt_data is not None:
+#         # Calculate CSR for each depth and add it to the DataFrame
+#         crr_values = []
+#         for index, row in spt_data.iterrows():
+#             spt_n_value = row["SPT"]
+#             depth = row['Depth']
+#             gamma = row['Gamma']
+#             fines_content = row["Fines"]
+#             crr_calculator = CRR("SPT", depth, 0, overburden_corr_cap, water_table_depth, gamma,eq_magnitude, unit_weight_water,henergy_c,borehole_diameter_var,
+#                                  sampler_c,fines_content,fines_correction_type, spt_n_value)
+#             crr_value = crr_calculator.calculate_crr_spt()
+#             crr_values.append(crr_value)
+#
+#         spt_data["CRR"] = crr_values
+#
+#         if 'CSR' in spt_data.columns:
+#             # Calculate the ratio CRR/CSR as FOS
+#             spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
+#             spt_data['FOS'] = spt_data['FOS'].round(2).clip(upper = 5.0)
+#         else:
+#             # Display a messagebox if CSR field does not exist
+#             messagebox.showinfo("Error", "Calculate CSR")
+#
+#
+#         # Preview the updated SPT data with CSR values
+#         preview_spt_data(frame, spt_data)
+#         print(eq_magnitude)
+#     else:
+#         messagebox.showerror("Error", "Failed to load SPT data.")
+#
+#     def calculate_and_preview_fos(frame, spt_data):
+#         """
+#         Calculate CRR for each SPT data and preview in the given frame.
+#
+#         Parameters:
+#         frame (tk.Frame): The frame to display the CSR data.
+#         spt_data (pd.DataFrame): The DataFrame containing SPT data.
+#         unit_weight_water (float): Unit weight of water.
+#         water_table_depth (float): Water table depth.
+#         peak_acceleration (float): Peak horizontal acceleration.
+#         """
+#         if spt_data is not None:
+#             # Calculate CSR for each depth and add it to the DataFrame
+#             fos_values = []
+#             spt_data['FOS'] = spt_data['CRR'] / spt_data['CSR']
+#             # Preview the updated SPT data with CSR values
+#             preview_spt_data(frame, spt_data)
+#
+#         else:
+#             messagebox.showerror("Error", "Failed to load SPT data.")
 
 def plot_crr_csr_vs_depth(frame, spt_data):
     """
@@ -183,6 +195,8 @@ def plot_crr_csr_vs_depth(frame, spt_data):
     Parameters:
     spt_data (pd.DataFrame): The DataFrame containing SPT or CPT data with CRR and CSR values.
     """
+
+    spt_data.head()
     if spt_data is not None:
         for widget in frame.winfo_children():
             widget.destroy()
@@ -243,63 +257,67 @@ def calculate_volumetric_strain_for_row(row):
 
 
 def interpolate_output(spt_data):
+    # Initialize an empty DataFrame to store the results
+    all_boreholes_interpolated = pd.DataFrame()
 
-    spt_data_interpolated = spt_data.copy()
+    # Group the data by borehole
+    grouped = spt_data.groupby('Borehole')
 
-    # Identify consecutive occurrences of value 2
-    # spt_data_interpolated['is_CRR_2'] = (spt_data_interpolated['CRR'] == 2).astype(int)
-    # consecutive_2 = spt_data_interpolated['is_CRR_2'].groupby(
-    #     spt_data_interpolated['CRR'].ne(2).cumsum()
-    # ).cumsum()
-    #
-    # # Remove rows where CRR is equal to 2 and not consecutive more than twice
-    # data_filtered = spt_data_interpolated[~((spt_data_interpolated['CRR'] == 2) & (consecutive_2 <= 2))]
+    for borehole, data in grouped:
+        spt_data_interpolated = data.copy()
 
-    # Interpolation function
-    interp_func_crr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CRR'], kind='cubic')
-    interp_func_csr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CSR'], kind='cubic')
-    interp_func_fines = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['Fines'], kind='cubic')
-    interp_func_spt = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['SPT'], kind='cubic')
+        # Interpolation functions
+        interp_func_crr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CRR'], kind='cubic')
+        interp_func_csr = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['CSR'], kind='cubic')
+        interp_func_fines = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['Fines'], kind='cubic')
+        interp_func_spt = interp1d(spt_data_interpolated['Depth'], spt_data_interpolated['SPT'], kind='cubic')
 
-    # New depth values from min to max depth rounded to whole numbers with intervals of 0.1m
-    new_depth = np.arange(min(spt_data_interpolated['Depth']), int(max(spt_data_interpolated['Depth'])) + 10, 0.1)
+        # New depth values from min to max depth rounded to whole numbers with intervals of 0.1m
+        new_depth = np.arange(min(spt_data_interpolated['Depth']), int(max(spt_data_interpolated['Depth'])) + 1, 0.1)
 
-    # Ensure new_depth does not exceed the maximum depth in the provided data
-    new_depth = new_depth[new_depth <= max(spt_data_interpolated['Depth'])]
+        # Ensure new_depth does not exceed the maximum depth in the provided data
+        new_depth = new_depth[new_depth <= max(spt_data_interpolated['Depth'])]
 
-    # Interpolated CRR values
-    new_crr = interp_func_crr(new_depth)
-    new_csr = interp_func_csr(new_depth)
-    new_fines = interp_func_fines(new_depth)
-    new_spt = interp_func_spt(new_depth)
+        # Interpolated values
+        new_crr = interp_func_crr(new_depth)
+        new_csr = interp_func_csr(new_depth)
+        new_fines = interp_func_fines(new_depth)
+        new_spt = interp_func_spt(new_depth)
 
+        new_crr = np.maximum(new_crr, 0)
 
-    new_crr = np.maximum(new_crr, 0)
+        interpolated_data = pd.DataFrame({
+            'Borehole': borehole,
+            'Depth': new_depth.round(1),
+            'Interpolated CRR': np.round(new_crr, decimals=2),
+            'Interpolated CSR': np.round(new_csr, decimals=2),
+            'Interpolated SPT': np.round(new_spt, decimals=0),
+            'Interpolated Fines': np.round(new_fines, decimals=2)
+        })
 
-    spt_data_interpolated = pd.DataFrame(
-        {'Depth': new_depth.round(1), 'Interpolated CRR': np.round(new_crr,decimals = 2), 'Interpolated CSR': np.round(new_csr,decimals = 2)
-            ,'Interpolated SPT': np.round(new_spt,decimals = 0),'Interpolated Fines': np.round(new_csr,decimals = 2)})
-    spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated CRR'] / spt_data_interpolated['Interpolated CSR']
-    spt_data_interpolated['Interpolated FOS'] = spt_data_interpolated['Interpolated FOS'].round(2).clip(upper=5.0)
+        interpolated_data['Interpolated FOS'] = interpolated_data['Interpolated CRR'] / interpolated_data[
+            'Interpolated CSR']
+        interpolated_data['Interpolated FOS'] = interpolated_data['Interpolated FOS'].round(2).clip(upper=5.0)
 
-    window_size = 5
-    poly_order = 3
+        window_size = 5
+        poly_order = 3
 
-    # Smooth CSR, CRR, and FOS columns
-    spt_data_interpolated['CSR_smooth'] = savgol_filter(spt_data_interpolated['Interpolated CSR'], window_size, poly_order)
-    spt_data_interpolated['CRR_smooth'] = savgol_filter(spt_data_interpolated['Interpolated CRR'], window_size, poly_order)
-    spt_data_interpolated['FOS_smooth'] = savgol_filter(spt_data_interpolated['Interpolated FOS'], window_size, poly_order)
+        # Smooth CSR, CRR, and FOS columns
+        interpolated_data['CSR_smooth'] = savgol_filter(interpolated_data['Interpolated CSR'], window_size, poly_order)
+        interpolated_data['CRR_smooth'] = savgol_filter(interpolated_data['Interpolated CRR'], window_size, poly_order)
+        interpolated_data['FOS_smooth'] = savgol_filter(interpolated_data['Interpolated FOS'], window_size, poly_order)
 
-    spt_data_interpolated['FOS_smooth'] = spt_data_interpolated['FOS_smooth'].clip(lower=0).clip(upper=5)
-    spt_data_interpolated['CRR_smooth'] = spt_data_interpolated['CRR_smooth'].clip(lower=0).clip(upper=2)
+        interpolated_data['FOS_smooth'] = interpolated_data['FOS_smooth'].clip(lower=0).clip(upper=5)
+        interpolated_data['CRR_smooth'] = interpolated_data['CRR_smooth'].clip(lower=0).clip(upper=2)
 
+        interpolated_data['Volumetric Strain'] = interpolated_data.apply(calculate_volumetric_strain_for_row, axis=1)
+        interpolated_data['Settlement'] = (interpolated_data['Volumetric Strain'] / 100) * 0.1
+        interpolated_data['Total Settlement'] = (interpolated_data['Settlement'].cumsum()) * 1000
 
-    spt_data_interpolated['Volumetric Strain'] = spt_data_interpolated.apply(calculate_volumetric_strain_for_row, axis=1)
-    spt_data_interpolated['Settlement'] = (spt_data_interpolated['Volumetric Strain']/100)*0.1
-    spt_data_interpolated['Total Settlement'] = (spt_data_interpolated['Settlement'].cumsum())*1000
+        # Append the interpolated data for the current borehole to the final DataFrame
+        all_boreholes_interpolated = pd.concat([all_boreholes_interpolated, interpolated_data], ignore_index=True)
 
-
-    return spt_data_interpolated
+    return all_boreholes_interpolated
 
 def plot_interpolated_output(frame1, frame2, spt_data):
     if spt_data is not None:
@@ -315,9 +333,9 @@ def plot_interpolated_output(frame1, frame2, spt_data):
         ax1.cla()
         ax1.plot(spt_data['CRR'], spt_data['Depth'], 'o', label='Original CRR')
         ax1.plot(spt_data['CSR'], spt_data['Depth'], '*', label='Original CSR')
-        ax1.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CRR')
-        ax1.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated CSR')
-        ax1.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='Interpolated FOS')
+        ax1.plot(spt_data_interpolated['CRR_smooth'], spt_data_interpolated['Depth'], '-', label='CRR')
+        ax1.plot(spt_data_interpolated['CSR_smooth'], spt_data_interpolated['Depth'], '-', label='CSR')
+        ax1.plot(spt_data_interpolated['FOS_smooth'], spt_data_interpolated['Depth'], '-', label='FOS')
         ax1.set_xlabel('CRR - CSR - FOS')
         ax1.set_ylabel('Depth')
         ax1.invert_yaxis()

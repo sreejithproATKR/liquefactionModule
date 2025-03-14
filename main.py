@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from spt_data import (preview_spt_data, calculate_and_preview_csr, calculate_and_preview_crr, load_spt_data_from_excel,
+from spt_data import (preview_spt_data, calculate_and_preview, load_spt_data_from_excel,
                       plot_crr_csr_vs_depth, export_interpolated_csr_crr, plot_interpolated_output)
 
 
@@ -88,15 +88,14 @@ def set_water_table_depth_stat_val(*args):
     global water_table_depth_stat
     if water_table_depth_stat_val.get():
         water_table_depth_stat = 1
-        print(water_table_depth_stat)
+        water_table_depth_entry.config(state='disabled')
     else:
         water_table_depth_stat = 0
+        water_table_depth_entry.config(state='normal')
+
 
 # Trace the variable to call set_overburden_corr_val whenever it changes
 water_table_depth_stat_val.trace_add("write", set_water_table_depth_stat_val)
-
-
-
 
 
 # Create input field for a_max in the left frame
@@ -445,27 +444,36 @@ overburden_corr_val.trace_add("write", set_overburden_corr_val)
 load_button = ttk.Button(spt_left_frame, text="Load SPT Data", command=lambda: load_spt_data_with_dialog(spt_preview_frame))
 load_button.grid(row=0, column=0, padx=5, pady=5)
 
+def calculate_and_load (*args):
+    global spt_data
+    calculate_and_preview(spt_preview_frame, spt_data,
+                          float(unit_weight_water_entry.get()),
+                          float(water_table_depth_entry.get()),
+                          float(a_max_entry.get()),
+                          float(manual_fs_entry.get()),
+                          water_table_depth_stat, overburden_corr_cap,
+                          float(eq_mag_entry.get()), henergy_c,
+                          boreholed_c, sampler_c, fines_correction_type)
+    print(spt_data)
+
 # Create a button to calculate CSR
-calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate CSR", command=lambda: calculate_and_preview_csr(spt_preview_frame, spt_data,
-    float(unit_weight_water_entry.get()),
-    float(water_table_depth_entry.get()),
-    float(a_max_entry.get()), float(manual_fs_entry.get()),water_table_depth_stat))
+calculate_csr_button = ttk.Button(spt_left_frame, text="Calculate", command=lambda: calculate_and_load())
 calculate_csr_button.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to calculate CRR
-calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
-    float(unit_weight_water_entry.get()),
-    float(water_table_depth_entry.get()),
-    henergy_c, boreholed_c, sampler_c, fines_correction_type, float(eq_mag_entry.get()), overburden_corr_cap))
-calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
+# calculate_crr_button = ttk.Button(spt_left_frame, text="Calculate CRR", command=lambda: calculate_and_preview_crr(spt_preview_frame, spt_data,
+#     float(unit_weight_water_entry.get()),
+#     float(water_table_depth_entry.get()),
+#     henergy_c, boreholed_c, sampler_c, fines_correction_type, float(eq_mag_entry.get()), overburden_corr_cap))
+# calculate_crr_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to plot CRR vs Depth and CSR vs Depth
 plot_button = ttk.Button(spt_left_frame, text="Plot", command=lambda: plot_interpolated_output(spt_leftB_frame, spt_rightB_frame, spt_data))
-plot_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
+plot_button.grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to export the data
 export_button = ttk.Button(spt_left_frame, text="Export", command=lambda: export_interpolated_csr_crr(spt_file_path,spt_data))
-export_button.grid(row=4, column=0, padx=5, pady=5, sticky='w')
+export_button.grid(row=3, column=0, padx=5, pady=5, sticky='w')
 
 # Create a button to interpolate the data
 # export_button = ttk.Button(spt_left_frame, text="Interpolate", command=lambda: interpolate_output(spt_rightB_frame, spt_data))
